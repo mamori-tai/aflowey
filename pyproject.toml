@@ -22,6 +22,7 @@ Changelog = "https://github.com/jerkos/aflow/releases"
 [tool.poetry.dependencies]
 python = "^3.6.1"
 click = "^8.0.1"
+loguru = "^0.5.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
@@ -47,6 +48,7 @@ sphinx-rtd-theme = "^0.5.2"
 sphinx-click = "^3.0.1"
 Pygments = "^2.9.0"
 nox = "^2021.10.1"
+nox-poetry = "^0.8.6"
 
 [tool.poetry.scripts]
 aflow = "aflow.__main__:main"
