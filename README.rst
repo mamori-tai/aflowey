@@ -111,7 +111,7 @@ Execute several flows asynchronously:
 
 .. code:: python
 
-        from fn import lift
+        from fn import flip
 
         name = "Marco"
 
