@@ -51,7 +51,7 @@ Requirements
 Installation
 ------------
 
-You can install *Aflow* via pip_ from PyPI_:
+You can install *Aflowey* via pip_ from PyPI_:
 
 .. code:: console
 
