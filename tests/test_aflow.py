@@ -23,7 +23,7 @@ def print_some_stuff():
     print("Hello from an async flow")
 
 
-class Test:
+class Toto:
     def __init__(self):
         self.attribute = 0
 
@@ -46,7 +46,7 @@ class Test:
         return a + b
 
 
-def test_spread(x):
+def spread_function(x):
     return x, x + 1
 
 
@@ -83,7 +83,7 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result, 4)
 
     async def test_impure_from_instance(self):
-        test = Test()
+        test = Toto()
         flow = aflow.from_flow(TestAsyncFlow.simple_flow) >> impure(
             test.print_some_stuff
         )
@@ -93,7 +93,7 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
         await flow.run()
 
     async def test_break(self):
-        test = Test()
+        test = Toto()
 
         flow = aflow.from_flow(TestAsyncFlow.simple_flow) >> 4 >> breaker(test.breaker)
         result = await flow.run()
@@ -104,18 +104,18 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result, 1)
 
     async def test_lift(self):
-        test = Test()
+        test = Toto()
         flow = aflow.from_flow(TestAsyncFlow.simple_flow) >> lift(
             test.return_new_value, x=12
         )
         self.assertEqual(await flow.run(), 2)
 
     async def test_spread_function(self):
-        test = Test()
+        test = Toto()
         flow = (
-            aflow.from_flow(TestAsyncFlow.simple_flow)
-            >> test_spread
-            >> spread(test.spread)
+                aflow.from_flow(TestAsyncFlow.simple_flow)
+                >> spread_function
+                >> spread(test.spread)
         )
         self.assertEqual(await flow.run(), 3)
 
@@ -174,7 +174,7 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
         def attr(x1):
             return x1
 
-        flow = aflow.from_args(Test()) >> F1(attr, extractor=attrgetter("attribute"))
+        flow = aflow.from_args(Toto()) >> F1(attr, extractor=attrgetter("attribute"))
         result = await flow.run()
         self.assertEqual(result, 0)
 
