@@ -110,7 +110,7 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(await flow.run(), 2)
 
-    async def test_spread(self):
+    async def test_spread_function(self):
         test = Test()
         flow = (
             aflow.from_flow(TestAsyncFlow.simple_flow)
