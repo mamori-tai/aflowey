@@ -148,6 +148,7 @@ Execute several flows asynchronously:
 It can be boring to create function that exactly matches arity of the flow.
 Aflowey provide some higher order functions to help, see:
 
+* lift
 * F0
 * F1
 * spread
