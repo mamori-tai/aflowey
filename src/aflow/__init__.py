@@ -1,4 +1,5 @@
 import asyncio
+from copy import copy
 from inspect import iscoroutinefunction
 from typing import Any, Union, List, Coroutine, overload
 
@@ -32,7 +33,7 @@ class AsyncFlow:
             func = F(func) >> async_wrap
 
         if side_effect_func:
-            func = side_effect(func)[0]
+            func = side_effect(func)
 
         return func
 
@@ -44,6 +45,15 @@ class AsyncFlow:
 
         return self
 
+    def __copy__(self):
+        """make a shallow copy"""
+        aws = self.aws[:]
+        args = self.args[:]
+        kwargs = self.kwargs.copy()
+        new_flow = self.__class__(*args, **kwargs)
+        new_flow.aws = aws
+        return new_flow
+
     async def run(self, **kwargs):
         """kwargs passed directly to asyncio.gather function"""
         return await _FlowExecutor(self).execute_flow(**kwargs)
@@ -52,7 +62,7 @@ class AsyncFlow:
     def log(log_str, print_arg=False):
         async def wrapped(last_result):
             logger.info(log_str)
-            if print_arg:
+            if print_arg:  # pragma: no cover
                 logger.info(last_result)
             return last_result
 
@@ -68,8 +78,8 @@ class AsyncFlow:
 
     @staticmethod
     def from_flow(flow) -> "AsyncFlow":
-        """for readability"""
-        return flow
+        """copy the flow and return it"""
+        return copy(flow)
 
 
 # aliases
@@ -90,26 +100,42 @@ class _FlowExecutor:
             return await _FlowExecutor(maybe_flow).execute_flow()
         return maybe_flow
 
+    @staticmethod
+    def need_to_cancel_flow(result: Any):
+        if result is AsyncFlow.CANCEL_FLOW:
+            logger.info("Received sentinel object, canceling flow...")
+            return True
+        return False
+
     async def execute_flow(self, **kwargs):
         """Main function to execute a flow"""
         if not self.flow.aws:
             logger.debug("no aws")
             return None
+
+        # get first step
         current_args = await self.flow.aws[0](*self.flow.args, *self.flow.kwargs)
+
+        # maybe the step is an async flow
         current_args = await self.check_and_execute_flow_if_needed(current_args)
 
+        # iterate over its tasks
         for task in self.flow.aws[1:]:
+            # side effect task, does not return a value
+            # reuse the current args
             if hasattr(task, "__side_effect__"):
                 result = await task(current_args)
-                if result is AsyncFlow.CANCEL_FLOW:
-                    logger.info("Received sentinel object, canceling flow...")
-                    break
-                continue
+                if self.need_to_cancel_flow(result):
+                    break  # pragma: no cover
+                continue  # pragma: no cover
 
-            current_args = await task(current_args)
-
-            current_args = await self.check_and_execute_flow_if_needed(current_args)
-
+            # get the result of a task
+            result = await task(current_args)
+            result = await self.check_and_execute_flow_if_needed(result)
+            # cancel ?
+            if self.need_to_cancel_flow(result):
+                break
+            current_args = result
         # return current args that are the actual results
         return current_args
 
@@ -125,14 +151,13 @@ class AsyncFlowExecutor:
     """
 
     def __init__(self, flows: List[AsyncFlow] = [], run_in_thread_pool=False):
-        self.flows = flows
-
+        self.flows = []
+        self.flows.append(flows)
         # to be run in parallel
-        self.other_flows = []
         self.run_in_thread_pool = run_in_thread_pool
 
     def __or__(self, flow: FlowOrListFlow) -> "AsyncFlowExecutor":
-        self.other_flows.append(flow)
+        self.flows.append(flow)
 
         return self
 
@@ -140,15 +165,7 @@ class AsyncFlowExecutor:
     async def _execute_one_flow(flow: "Flow", *args, **kwargs) -> Any:
         return await _FlowExecutor(flow, *args, **kwargs).execute_flow()
 
-    @overload
-    def exec_or_gather(self, flow: List[AsyncFlow]) -> Coroutine:
-        ...
-
-    @overload
-    def exec_or_gather(self, flow: AsyncFlow) -> Coroutine:
-        ...
-
-    def exec_or_gather(self, flow):
+    def exec_or_gather(self, flow: FlowOrListFlow) -> Coroutine:
         execute = self._execute_one_flow
         if isinstance(flow, list):
             return asyncio.gather(
@@ -159,10 +176,13 @@ class AsyncFlowExecutor:
     async def run(self, **kwargs):
         """main function to run stuff in parallel"""
         # if other flow run in parallel
-        flows = [
-            *[self.exec_or_gather(flow) for flow in self.flows],
-            *[self.exec_or_gather(flow) for flow in self.other_flows],
-        ]
-
+        flows = [self.exec_or_gather(flow) for flow in self.flows]
         results = await asyncio.gather(*flows, **kwargs)
         return results
+
+    @staticmethod
+    def executor(flows):
+        return AsyncFlowExecutor(flows)
+
+
+async_exec = aexec = AsyncFlowExecutor.executor

@@ -28,7 +28,7 @@ class F:
     def __gt__(self, other: Callable) -> "F":
         """function composition"""
 
-        #@functools.wraps(other)
+        @functools.wraps(other)
         def wrapped(*args, **kwargs):
             return other(self.func(*args, **kwargs))
 
@@ -39,7 +39,7 @@ class F:
         return self.func(*args, **kwargs)
 
     def __repr__(self) -> str:
-        return f"<F instance: {repr(self.func)}"
+        return f"<F instance: {repr(self.func)}>"
 
 
 def async_wrap(func: Callable) -> F:
@@ -47,20 +47,18 @@ def async_wrap(func: Callable) -> F:
     calling it
     """
 
-    #@functools.wraps(func)
+    @functools.wraps(func)
     async def wrapped(*args, **kwargs):
-        result = func(*args, **kwargs)
 
-        if isinstance(result, F):
-            result = result.func
+        async def _exec(function, *a, **kw):
+            current_result = function(*a, **kw)
+            if iscoroutine(current_result):
+                current_result = await current_result
+                if isinstance(current_result, F):
+                    return await _exec(current_result.func)
+            return current_result
 
-        is_coroutine_function = iscoroutinefunction(result)
-        if is_coroutine_function:
-            # call with no parameter here ?
-            result = await result()
-        elif iscoroutine(result):
-            result = await result
-        return result
+        return await _exec(func, *args, **kwargs)
 
     return F(wrapped)
 
@@ -77,7 +75,7 @@ apartial = partial = lift
 def f1(func: Callable, extractor: Callable = None) -> F:
     """ return a one argument function"""
 
-    #@functools.wraps(func)
+    @functools.wraps(func)
     def wrapped(arg1):
         value = arg1 if extractor is None else extractor(arg1)
         return func(value)
@@ -89,7 +87,7 @@ F1 = f1
 
 
 def f0(func: Callable) -> F:
-    #@functools.wraps(func)
+    @functools.wraps(func)
     def wrapped(arg1):
         return func()
 
@@ -111,7 +109,7 @@ def spread_args(func):
     """create a function which takes an iterable of args
     and spread it into the given function"""
 
-    #@functools.wraps(func)
+    @functools.wraps(func)
     def wrapped(args):
         return func(*args)
 
@@ -140,6 +138,8 @@ def side_effect(*func) -> List:
         f.__side_effect__ = True
         return f
 
+    if len(func) == 1:
+        return make_impure(func[0])
     return [make_impure(fu) for fu in func]
 
 
