@@ -7,26 +7,26 @@ Aflow
 
 |pre-commit| |Black|
 
-.. |PyPI| image:: https://img.shields.io/pypi/v/aflow.svg
-   :target: https://pypi.org/project/aflow/
+.. |PyPI| image:: https://img.shields.io/pypi/v/aflowey.svg
+   :target: https://pypi.org/project/aflowey/
    :alt: PyPI
-.. |Status| image:: https://img.shields.io/pypi/status/aflow.svg
-   :target: https://pypi.org/project/aflow/
+.. |Status| image:: https://img.shields.io/pypi/status/aflowey.svg
+   :target: https://pypi.org/project/aflowey/
    :alt: Status
-.. |Python Version| image:: https://img.shields.io/pypi/pyversions/aflow
-   :target: https://pypi.org/project/aflow
+.. |Python Version| image:: https://img.shields.io/pypi/pyversions/aflowey
+   :target: https://pypi.org/project/aflowey
    :alt: Python Version
-.. |License| image:: https://img.shields.io/pypi/l/aflow
+.. |License| image:: https://img.shields.io/pypi/l/aflowey
    :target: https://opensource.org/licenses/MIT
    :alt: License
-.. |Read the Docs| image:: https://img.shields.io/readthedocs/aflow/latest.svg?label=Read%20the%20Docs
-   :target: https://aflow.readthedocs.io/
-   :alt: Read the documentation at https://aflow.readthedocs.io/
-.. |Tests| image:: https://github.com/jerkos/aflow/workflows/Tests/badge.svg
+.. |Read the Docs| image:: https://img.shields.io/readthedocs/aflowey/latest.svg?label=Read%20the%20Docs
+   :target: https://aflowey.readthedocs.io/
+   :alt: Read the documentation at https://aflowey.readthedocs.io/
+.. |Tests| image:: https://github.com/jerkos/aflowey/workflows/Tests/badge.svg
    :target: https://github.com/jerkos/aflow/actions?workflow=Tests
    :alt: Tests
-.. |Codecov| image:: https://codecov.io/gh/jerkos/aflow/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/jerkos/aflow
+.. |Codecov| image:: https://codecov.io/gh/jerkos/aflowey/branch/main/graph/badge.svg
+   :target: https://codecov.io/gh/jerkos/aflowey
    :alt: Codecov
 .. |pre-commit| image:: https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white
    :target: https://github.com/pre-commit/pre-commit
@@ -55,7 +55,7 @@ You can install *Aflow* via pip_ from PyPI_:
 
 .. code:: console
 
-   $ pip install aflow
+   $ pip install aflowey
 
 
 Usage
