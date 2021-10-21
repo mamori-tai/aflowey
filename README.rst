@@ -88,7 +88,7 @@ Chain function to execute an async flow !
         return processed_data
 
     async def insert_into_db(content):
-        return db.insert_one(content)
+        return await db.insert_one(content)
 
     def get_url_flow(url):
         # defining a flow for working with url
@@ -166,7 +166,7 @@ License
 -------
 
 Distributed under the terms of the `MIT license`_,
-*Aflow* is free and open source software.
+*Aflowey* is free and open source software.
 
 
 Issues
