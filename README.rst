@@ -1,5 +1,5 @@
 Aflowey
-=====
+========
 
 |PyPI| |Status| |Python Version| |License|
 
