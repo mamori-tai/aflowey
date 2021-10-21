@@ -1,11 +1,18 @@
 import asyncio
 from copy import copy
 from inspect import iscoroutinefunction
-from typing import Any, Union, List, Coroutine, overload
+from typing import Any
+from typing import Coroutine
+from typing import List
+from typing import overload
+from typing import Union
 
 from loguru import logger
 
-from aflow.f import F, async_wrap, side_effect, ensure_callable
+from aflow.f import async_wrap
+from aflow.f import ensure_callable
+from aflow.f import F
+from aflow.f import side_effect
 
 
 class AsyncFlow:

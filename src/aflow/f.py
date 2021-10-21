@@ -1,6 +1,10 @@
 import functools
-from inspect import iscoroutinefunction, iscoroutine, getfullargspec
-from typing import Any, Callable, List
+from inspect import getfullargspec
+from inspect import iscoroutine
+from inspect import iscoroutinefunction
+from typing import Any
+from typing import Callable
+from typing import List
 
 from loguru import logger
 
@@ -49,7 +53,6 @@ def async_wrap(func: Callable) -> F:
 
     @functools.wraps(func)
     async def wrapped(*args, **kwargs):
-
         async def _exec(function, *a, **kw):
             current_result = function(*a, **kw)
             if iscoroutine(current_result):
