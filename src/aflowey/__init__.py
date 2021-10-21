@@ -22,8 +22,6 @@ class AsyncFlow:
     await flow.run()
     """
 
-    CANCEL_FLOW = object()
-
     def __init__(self, *args, **kwargs):
         # first arguments input
         self.args = args
@@ -97,6 +95,8 @@ flog = aflow.log
 class _FlowExecutor:
     """Single flow executor"""
 
+    CANCEL_FLOW = object()
+
     def __init__(self, flow):
         self.flow = flow
 
@@ -109,7 +109,7 @@ class _FlowExecutor:
 
     @staticmethod
     def need_to_cancel_flow(result: Any):
-        if result is AsyncFlow.CANCEL_FLOW:
+        if result is _FlowExecutor.CANCEL_FLOW:
             logger.info("Received sentinel object, canceling flow...")
             return True
         return False
@@ -147,6 +147,7 @@ class _FlowExecutor:
         return current_args
 
 
+CANCEL_FLOW = _FlowExecutor.CANCEL_FLOW
 FlowOrListFlow = Union[List[AsyncFlow], AsyncFlow]
 
 

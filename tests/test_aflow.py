@@ -1,9 +1,7 @@
 import unittest
 from operator import attrgetter
 
-from loguru import logger
-
-from aflowey import aflow
+from aflowey import aflow, CANCEL_FLOW
 from aflowey import async_exec
 from aflowey import flog
 from aflowey.f import breaker
@@ -35,7 +33,7 @@ class Toto:
 
     def breaker(self, z):
         if z > 2:
-            return aflow.CANCEL_FLOW
+            return CANCEL_FLOW
         return 1
 
     def return_new_value(self, z, x):
@@ -181,7 +179,7 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
     async def test_chain_flow(self):
         def value(y):
             if y == 1:
-                return aflow.CANCEL_FLOW
+                return CANCEL_FLOW
             return y
 
         def get_flow(z):
