@@ -113,6 +113,8 @@ Execute several flows asynchronously:
 
         from fn import lift
 
+        name = "Marco"
+
         user_flow = (
             aflow.empty()
             >> lift(db.find_one, search={"username": name})
@@ -122,9 +124,11 @@ Execute several flows asynchronously:
             >> impure(lift(flip(setattr), datetime.now(), 'created_at'))
         )
 
+        organization_id = "Not employed"
+
         organization_flow = (
             aflow.empty()
-            >> lift(db_find_one, search={"organization_id": id})
+            >> lift(db_find_one, search={"organization_id": organization_id})
             >> Organization.from_dict
         )
 
