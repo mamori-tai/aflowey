@@ -3,16 +3,16 @@ from operator import attrgetter
 
 from loguru import logger
 
-from aflow import aflow
-from aflow import async_exec
-from aflow import flog
-from aflow.f import breaker
-from aflow.f import F
-from aflow.f import F1
-from aflow.f import identity
-from aflow.f import impure
-from aflow.f import lift
-from aflow.f import spread
+from aflowey import aflow
+from aflowey import async_exec
+from aflowey import flog
+from aflowey.f import breaker
+from aflowey.f import F
+from aflowey.f import F1
+from aflowey.f import identity
+from aflowey.f import impure
+from aflowey.f import lift
+from aflowey.f import spread
 
 
 def x():

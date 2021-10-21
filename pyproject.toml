@@ -1,26 +1,23 @@
 [tool.poetry]
-name = "aflow"
+name = "aflowey"
 version = "0.0.0"
-description = "Aflow"
+description = "Aflowey"
 authors = ["Marc Dubois <cram@hotmail.fr>"]
 license = "MIT"
 readme = "README.rst"
-homepage = "https://github.com/jerkos/aflow"
-repository = "https://github.com/jerkos/aflow"
-documentation = "https://aflow.readthedocs.io"
+homepage = "https://github.com/jerkos/aflowey"
+repository = "https://github.com/jerkos/aflowey"
+documentation = "https://aflowey.readthedocs.io"
 classifiers = [
     "Development Status :: 3 - Alpha",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
 ]
 
 [tool.poetry.urls]
-Changelog = "https://github.com/jerkos/aflow/releases"
+Changelog = "https://github.com/jerkos/aflowey/releases"
 
 [tool.poetry.dependencies]
-python = "^3.6.1"
+python = "^3.9"
 click = "^8.0.1"
 loguru = "^0.5.3"
 
@@ -50,15 +47,12 @@ Pygments = "^2.9.0"
 nox = "^2021.10.1"
 nox-poetry = "^0.8.6"
 
-[tool.poetry.scripts]
-aflow = "aflow.__main__:main"
-
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
 
 [tool.coverage.run]
 branch = true
-source = ["aflow"]
+source = ["aflowey"]
 
 [tool.coverage.report]
 show_missing = true

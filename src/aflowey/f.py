@@ -149,7 +149,7 @@ def side_effect(*func) -> List:
 imp = impure = side_effect
 
 
-def ensure_callable(x):
+def ensure_callable(x: Any) -> Callable:
     if not callable(x):
 
         def wrapped(*args, **kwargs):

@@ -9,10 +9,10 @@ from typing import Union
 
 from loguru import logger
 
-from aflow.f import async_wrap
-from aflow.f import ensure_callable
-from aflow.f import F
-from aflow.f import side_effect
+from aflowey.f import async_wrap
+from aflowey.f import ensure_callable
+from aflowey.f import F
+from aflowey.f import side_effect
 
 
 class AsyncFlow:

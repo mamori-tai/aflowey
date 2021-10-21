@@ -1,1 +1,1 @@
-"""Test suite for the aflow package."""
+"""Test suite for the aflowey package."""
