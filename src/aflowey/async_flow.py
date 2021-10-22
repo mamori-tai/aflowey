@@ -183,7 +183,7 @@ class AsyncFlowExecutor:
 
     @staticmethod
     async def _execute_one_flow(flow: "Flow", *args, **kwargs) -> Any:
-        return await _FlowExecutor(flow, *args, **kwargs).execute_flow()
+        return await _FlowExecutor(flow).execute_flow()
 
     def exec_or_gather(self, flow: FlowOrListFlow) -> Coroutine:
         execute = self._execute_one_flow
