@@ -6,10 +6,10 @@ Reference
     :backlinks: none
 
 
-aflowey.__init__
+aflowey.async_flow
 --------------
 
-.. automodule:: aflowey.__init__
+.. automodule:: aflowey.async_flow
    :members:
 
 aflowey.f
