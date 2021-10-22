@@ -99,7 +99,7 @@ F0 = f0
 
 def may_fail(func: Callable) -> F:
     """ simply for readability"""
-    return F(func)
+    return func
 
 
 breaker = erratic = may_fail
