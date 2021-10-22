@@ -4,22 +4,22 @@ from inspect import iscoroutinefunction
 from typing import Any
 from typing import Coroutine
 from typing import List
-from typing import overload
 from typing import Union
 
 from loguru import logger
 
+from aflowey.f import F
 from aflowey.f import async_wrap
 from aflowey.f import ensure_callable
-from aflowey.f import F
 from aflowey.f import side_effect
 
 
 class AsyncFlow:
     """
+    Describe an async flow chaining function
 
-    flow = (Flow() >> gen1 >> gen2 >> gen3) | (Flow()
-    await flow.run()
+    >>>flow = (AsyncFlow() >> gen1 >> gen2 >> gen3)
+    >>>await flow.run()
     """
 
     def __init__(self, *args, **kwargs):
@@ -43,6 +43,11 @@ class AsyncFlow:
         return func
 
     def __rshift__(self, aws) -> "AsyncFlow":
+        """add a new step to the flow
+
+        Args:
+            aws: list of callable or callable
+        """
         if isinstance(aws, list):
             self.aws += [self.ensure_coroutine_func(a) for a in aws]
         else:
@@ -60,11 +65,16 @@ class AsyncFlow:
         return new_flow
 
     async def run(self, **kwargs):
-        """kwargs passed directly to asyncio.gather function"""
+        """run the flow
+
+        Returns:
+            coroutine
+        """
         return await _FlowExecutor(self).execute_flow(**kwargs)
 
     @staticmethod
     def log(log_str, print_arg=False):
+        """utility function to log between steps, printing argument if needed"""
         async def wrapped(last_result):
             logger.info(log_str)
             if print_arg:  # pragma: no cover
@@ -75,15 +85,20 @@ class AsyncFlow:
 
     @staticmethod
     def from_args(*args, **kwargs) -> "AsyncFlow":
+        """create a flow with given arguments as first input"""
         return AsyncFlow(*args, **kwargs)
 
     @staticmethod
     def empty() -> "AsyncFlow":
+        """create an empty flow"""
         return AsyncFlow()
 
     @staticmethod
-    def from_flow(flow) -> "AsyncFlow":
-        """copy the flow and return it"""
+    def from_flow(flow: "AsyncFlow") -> "AsyncFlow":
+        """create a new flow from given flow, copying it
+        (args, kwargs, and aws functions)
+        """
+        assert isinstance(flow, AsyncFlow)
         return copy(flow)
 
 
@@ -153,8 +168,8 @@ FlowOrListFlow = Union[List[AsyncFlow], AsyncFlow]
 
 class AsyncFlowExecutor:
     """
-
-    (executor(flows) | flow).run()
+    Execute several flows in parallel
+    >>>(executor(flows) | flow).run()
 
     """
 
@@ -165,6 +180,7 @@ class AsyncFlowExecutor:
         self.run_in_thread_pool = run_in_thread_pool
 
     def __or__(self, flow: FlowOrListFlow) -> "AsyncFlowExecutor":
+        """add a flow to execute in parallel"""
         self.flows.append(flow)
 
         return self
@@ -190,6 +206,7 @@ class AsyncFlowExecutor:
 
     @staticmethod
     def executor(flows):
+        """create a new executor from one flow or array of flows"""
         return AsyncFlowExecutor(flows)
 
 

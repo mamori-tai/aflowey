@@ -6,8 +6,14 @@ Reference
     :backlinks: none
 
 
-aflow.__main__
+aflowey.__init__
 --------------
 
-.. automodule:: aflow.__main__
+.. automodule:: aflowey.__init__
+   :members:
+
+aflowey.f
+--------------
+
+.. automodule:: aflowey.f
    :members:
