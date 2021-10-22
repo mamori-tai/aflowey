@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aflowey"
-version = "0.0.1"
+version = "0.0.2"
 description = "Aflowey"
 authors = ["Marc Dubois <cram@hotmail.fr>"]
 license = "MIT"
@@ -18,7 +18,6 @@ Changelog = "https://github.com/jerkos/aflowey/releases"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-click = "^8.0.1"
 loguru = "^0.5.3"
 
 [tool.poetry.dev-dependencies]
@@ -42,7 +41,6 @@ darglint = "^1.8.0"
 reorder-python-imports = "^2.5.0"
 pre-commit-hooks = "^4.0.1"
 sphinx-rtd-theme = "^0.5.2"
-sphinx-click = "^3.0.1"
 Pygments = "^2.9.0"
 nox = "^2021.10.1"
 nox-poetry = "^0.8.6"
