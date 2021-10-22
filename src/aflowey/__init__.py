@@ -169,7 +169,8 @@ FlowOrListFlow = Union[List[AsyncFlow], AsyncFlow]
 class AsyncFlowExecutor:
     """
     Execute several flows in parallel
-    >>>(executor(flows) | flow).run()
+
+    >>>await (executor(flows) | flow).run()
 
     """
 
