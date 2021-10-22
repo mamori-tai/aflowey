@@ -40,8 +40,10 @@ Features
 --------
 
 * Utilities to perform flow with coroutine functions
-* Strong focus on readability
 * Easily launch several flows simultaneously
+* Strong focus on readability
+
+https://aflowey.readthedocs.io/en/latest/index.html
 
 Requirements
 ------------
