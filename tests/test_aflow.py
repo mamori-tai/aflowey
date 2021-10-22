@@ -111,9 +111,9 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
     async def test_spread_function(self):
         test = Toto()
         flow = (
-                aflow.from_flow(TestAsyncFlow.simple_flow)
-                >> spread_function
-                >> spread(test.spread)
+            aflow.from_flow(TestAsyncFlow.simple_flow)
+            >> spread_function
+            >> spread(test.spread)
         )
         self.assertEqual(await flow.run(), 3)
 

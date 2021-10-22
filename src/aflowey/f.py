@@ -1,12 +1,9 @@
 import functools
 from inspect import getfullargspec
 from inspect import iscoroutine
-from inspect import iscoroutinefunction
 from typing import Any
 from typing import Callable
 from typing import List
-
-from loguru import logger
 
 
 def identity(x: Any) -> Any:
