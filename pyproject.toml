@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aflowey"
-version = "0.0.2"
+version = "0.0.3"
 description = "Aflowey"
 authors = ["Marc Dubois <cram@hotmail.fr>"]
 license = "MIT"
