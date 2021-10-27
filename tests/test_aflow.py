@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 from operator import attrgetter
 
@@ -189,3 +190,30 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
 
         result = await flow.run()
         self.assertEqual(result, 1)
+
+    async def test_flow_with_impure_bound_method(self):
+        class MyClass:
+            async def bound_method(self):
+                print(a)
+                await asyncio.sleep(0.1)
+        a = MyClass()
+        f = (
+            aflow.from_args(1)
+            >> impure(a.bound_method)
+        )
+        r = await f.run()
+        self.assertEqual(r, 1)
+
+        f = (
+                aflow.empty()
+                >> impure(a.bound_method)
+        )
+        r = await f.run()
+        self.assertEqual(r, None)
+
+        f = (
+                aflow.empty()
+                >> a.bound_method
+        )
+        r = await f.run()
+        self.assertEqual(r, None)

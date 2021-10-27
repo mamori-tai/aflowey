@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aflowey"
-version = "0.0.5"
+version = "0.0.6"
 description = "Aflowey"
 authors = ["Marc Dubois <cram@hotmail.fr>"]
 license = "MIT"
@@ -9,7 +9,7 @@ homepage = "https://github.com/jerkos/aflowey"
 repository = "https://github.com/jerkos/aflowey"
 documentation = "https://aflowey.readthedocs.io"
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3.9",
 ]
 

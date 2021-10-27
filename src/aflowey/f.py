@@ -5,6 +5,8 @@ from typing import Any
 from typing import Callable
 from typing import List
 
+from loguru import logger
+
 
 def identity(x: Any) -> Any:
     return x
@@ -51,10 +53,13 @@ def async_wrap(func: Callable) -> F:
     @functools.wraps(func)
     async def wrapped(*args, **kwargs):
         async def _exec(function, *a, **kw):
+            logger.debug(function)
+            logger.debug(a)
             current_result = function(*a, **kw)
             if iscoroutine(current_result):
                 current_result = await current_result
                 if isinstance(current_result, F):
+                    logger.debug(current_result.func)
                     return await _exec(current_result.func)
             return current_result
 
@@ -64,7 +69,9 @@ def async_wrap(func: Callable) -> F:
 
 
 def lift(func, *args, **kwargs) -> F:
-    """make a partial function of the given func"""
+    """make a partial function of the given func and ensure
+    it will work in an async context
+    """
     new_func = functools.partial(func, *args, **kwargs)
     return F(new_func) >> async_wrap
 
@@ -73,13 +80,15 @@ apartial = partial = lift
 
 
 def f1(func: Callable, extractor: Callable = None) -> F:
-    """ return a one argument function"""
+    """wraps a one argument function (with arity 1) and allows
+        to add an extractor to work on the input argument.
+    """
 
     @functools.wraps(func)
     def wrapped(arg1):
         value = arg1 if extractor is None else extractor(arg1)
         return func(value)
-
+    wrapped.__F1__ = True
     return F(wrapped)
 
 
@@ -87,10 +96,14 @@ F1 = f1
 
 
 def f0(func: Callable) -> F:
+    """create a new function from a 0 arity function (takes 0 args). The new
+     function takes exactly one argument and does not pass it to the wrapped
+     function. It allows using a 0 arity function in a flow relatively easily.
+    """
     @functools.wraps(func)
     def wrapped(arg1):
         return func()
-
+    wrapped.__F0__ = True
     return F(wrapped)
 
 

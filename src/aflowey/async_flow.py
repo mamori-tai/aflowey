@@ -5,15 +5,15 @@ from typing import List, Union, Any, Coroutine
 
 from loguru import logger
 
-from aflowey import ensure_callable, F, async_wrap, side_effect
+from aflowey import ensure_callable, F, async_wrap
 
 
 class AsyncFlow:
     """
     Describe an async flow chaining function
 
-    >>>flow = (AsyncFlow() >> gen1 >> gen2 >> gen3)
-    >>>await flow.run()
+    >>> flow = (AsyncFlow() >> gen1 >> gen2 >> gen3)
+    >>> await flow.run()
     """
 
     def __init__(self, *args, **kwargs):
@@ -32,7 +32,7 @@ class AsyncFlow:
             func = F(func) >> async_wrap
 
         if side_effect_func:
-            func = side_effect(func)
+            func.__side_effect__ = True
 
         return func
 
@@ -107,7 +107,7 @@ class _FlowExecutor:
 
     CANCEL_FLOW = object()
 
-    def __init__(self, flow):
+    def __init__(self, flow: AsyncFlow):
         self.flow = flow
 
     @staticmethod
@@ -118,20 +118,28 @@ class _FlowExecutor:
         return maybe_flow
 
     @staticmethod
-    def need_to_cancel_flow(result: Any):
+    def need_to_cancel_flow(result: Any) -> bool:
         if result is _FlowExecutor.CANCEL_FLOW:
             logger.info("Received sentinel object, canceling flow...")
             return True
         return False
 
-    async def execute_flow(self, **kwargs):
+    async def execute_flow(self):
         """Main function to execute a flow"""
         if not self.flow.aws:
             logger.debug("no aws")
             return None
 
         # get first step
-        current_args = await self.flow.aws[0](*self.flow.args, *self.flow.kwargs)
+        first_aws = self.flow.aws[0]
+        if not self.flow.args and hasattr(first_aws, "__F0__"):
+            self.flow.args = (None,)
+
+        res = await first_aws(*self.flow.args, *self.flow.kwargs)
+        if hasattr(first_aws, "__side_effect__"):
+            current_args = self.flow.args[0]
+        else:
+            current_args = res
 
         # maybe the step is an async flow
         current_args = await self.check_and_execute_flow_if_needed(current_args)
