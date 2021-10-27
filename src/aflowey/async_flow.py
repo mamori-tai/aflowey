@@ -12,8 +12,8 @@ class AsyncFlow:
     """
     Describe an async flow chaining function
 
-    >>> flow = (AsyncFlow() >> gen1 >> gen2 >> gen3)
-    >>> await flow.run()
+    >>>flow = (AsyncFlow() >> gen1 >> gen2 >> gen3)
+    >>>await flow.run()
     """
 
     def __init__(self, *args, **kwargs):

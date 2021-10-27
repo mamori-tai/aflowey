@@ -7,7 +7,7 @@ Reference
 
 
 aflowey.async_flow
---------------
+-------------------
 
 .. automodule:: aflowey.async_flow
    :members:
