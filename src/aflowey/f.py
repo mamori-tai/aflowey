@@ -5,8 +5,6 @@ from typing import Any
 from typing import Callable
 from typing import List
 
-from loguru import logger
-
 
 def identity(x: Any) -> Any:
     return x
@@ -53,13 +51,10 @@ def async_wrap(func: Callable) -> F:
     @functools.wraps(func)
     async def wrapped(*args, **kwargs):
         async def _exec(function, *a, **kw):
-            logger.debug(function)
-            logger.debug(a)
             current_result = function(*a, **kw)
             if iscoroutine(current_result):
                 current_result = await current_result
                 if isinstance(current_result, F):
-                    logger.debug(current_result.func)
                     return await _exec(current_result.func)
             return current_result
 
