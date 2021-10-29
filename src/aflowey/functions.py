@@ -29,11 +29,12 @@ def async_wrap(func: F) -> F:
     return FF >> wrapped
 
 
-def log(log_str: str, print_arg: bool = False) -> Any:
+def log(log_str: str = "", print_arg: bool = False) -> Any:
     """utility function to log between steps, printing argument if needed"""
 
     async def wrapped(last_result: Any) -> Any:
-        logger.info(log_str)
+        if log_str:
+            logger.info(log_str)
         if print_arg:  # pragma: no cover
             logger.info(last_result)
         return last_result
