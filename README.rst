@@ -43,7 +43,7 @@ Features
 * Easily launch several flows simultaneously
 * Strong focus on readability
 
-https://aflowey.readthedocs.io/en/latest/index.html
+https://aflowey.readthedocs.io
 
 Requirements
 ------------
@@ -197,6 +197,6 @@ This project was generated from `@cjolowicz`_'s `Hypermodern Python Cookiecutter
 .. _pip: https://pip.pypa.io/
 .. github-only
 .. _Contributor Guide: CONTRIBUTING.rst
-.. _Usage: https://aflow.readthedocs.io/en/latest/usage.html
+.. _Usage: https://aflowey.readthedocs.io
 .. _fn: https://github.com/kachayev/fn.py
 .. _tenacity: https://github.com/jd/tenacity

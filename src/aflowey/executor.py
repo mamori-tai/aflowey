@@ -1,7 +1,7 @@
 import asyncio
-from typing import List, Any, Awaitable, Union
+from typing import List, Any, Awaitable, Union, cast, overload
 
-from aflowey import AsyncFlow
+from aflowey import AsyncFlow, aflow
 from aflowey.single_executor import SingleFlowExecutor
 
 FlowOrListFlow = Union[List[AsyncFlow], AsyncFlow]
@@ -15,9 +15,10 @@ class AsyncFlowExecutor:
 
     """
 
-    def __init__(self, flows: List[AsyncFlow] = []) -> None:
+    def __init__(self, flows: Union[AsyncFlow, List[AsyncFlow]] = []) -> None:
         self.flows = []
-        self.flows.append(flows)
+        if flows:
+            self.flows.append(flows)
 
     def __or__(self, flow: List[AsyncFlow]) -> "AsyncFlowExecutor":
         """add a flow to execute in parallel"""
@@ -43,9 +44,31 @@ class AsyncFlowExecutor:
         return results
 
     @staticmethod
-    def executor(flows: List[AsyncFlow]) -> "AsyncFlowExecutor":
+    def ensure_flow(value: Any) -> AsyncFlow:
+        if isinstance(value, AsyncFlow):
+            return value
+        return cast(AsyncFlow, aflow.empty() >> value)
+
+    @staticmethod
+    @overload
+    def executor(flows: Union[Any, AsyncFlow]) -> "AsyncFlowExecutor":
+        ...  # pragma: no cover
+
+    @staticmethod
+    @overload
+    def executor(flows: List[Union[Any, AsyncFlow]]) -> "AsyncFlowExecutor":
+        ...  # pragma: no cover
+
+    @staticmethod
+    def executor(flows: Any) -> "AsyncFlowExecutor":
         """create a new executor from one flow or array of flows"""
-        return AsyncFlowExecutor(flows)
+        if not isinstance(flows, list):
+            flows = AsyncFlowExecutor.ensure_flow(flows)
+            return AsyncFlowExecutor(flows)
+
+        new_flows = [AsyncFlowExecutor.ensure_flow(value) for value in flows]
+        executor = AsyncFlowExecutor(new_flows)
+        return executor
 
 
 async_exec = aexec = AsyncFlowExecutor.executor

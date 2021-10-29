@@ -4,9 +4,11 @@ from operator import attrgetter
 
 from loguru import logger
 
-from aflowey import aflow, CANCEL_FLOW
+from aflowey import aflow, CANCEL_FLOW, aexec
 from aflowey import async_exec
 from aflowey import flog
+from aflowey.async_flow import step as _
+from aflowey.f import F, FF
 from aflowey.functions import (
     breaker,
     named,
@@ -19,7 +21,6 @@ from aflowey.functions import (
     spread,
     identity,
 )
-from aflowey.f import F
 
 
 def x():
@@ -167,6 +168,9 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
             print(a_number)
             return lift(async_toto, number=number, number_=number_)
 
+        def tata(a_num):
+            return lift(toto, a_number=a_num, number=1, number_=1)
+
         func = lift(toto, number=4, number_=4)
         flow = aflow.from_flow(TestAsyncFlow.simple_flow) >> func
         result = await flow.run()
@@ -176,6 +180,11 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
         flow = aflow.from_flow(TestAsyncFlow.simple_flow) >> func2
         result = await flow.run()
         self.assertEqual(result, 8)
+
+        func3 = lift(tata)
+        flow = aflow.from_flow(TestAsyncFlow.simple_flow) >> func3
+        result = await flow.run()
+        logger.debug(result)
 
     async def test_F1(self):
         def attr(x1):
@@ -246,3 +255,29 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
 
         a = MyClass()
         await (aflow.empty() >> a.print_a).run()
+
+    async def test_aexec_multiple_aws(self):
+        async def print_a_value(y):
+            await asyncio.sleep(0.01)
+            return y
+
+        ((a, b, c),) = await aexec(
+            [lift(print_a_value, 1), lift(print_a_value, 2), lift(print_a_value, 3)]
+        ).run()
+        self.assertEqual((a, b, c), (1, 2, 3))
+
+    async def test_flow_step(self):
+        print_stuff = FF >> print_some_stuff >> F0
+        flow = (
+            aflow.empty()
+            >> _(x, name="first step")
+            >> _(identity, name="second step")
+            >> _(print_stuff, name="impure", impure=True)
+            >> _(lambda v: (v + 1, v + 2), name="add_one")
+            >> _(spread(lambda v, z: (z ** 2, v ** 2)), name="pow2")
+        )
+
+        result = await flow.run()
+        logger.debug(result)
+        self.assertEqual(result, (9, 4))
+        logger.debug(flow.steps)

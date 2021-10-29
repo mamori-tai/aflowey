@@ -2,7 +2,10 @@ import functools
 import inspect
 from typing import Any, Callable, List, Union, Iterable, Optional, cast
 
+from loguru import logger
+
 from aflowey import F
+from aflowey.f import FF
 from aflowey.types import Function
 
 
@@ -17,21 +20,35 @@ def async_wrap(func: F) -> F:
             current_result = function(*a, **kw)
             if inspect.iscoroutine(current_result):
                 current_result = await current_result
-                if isinstance(current_result, F):
-                    return await _exec(current_result.func)
+            if callable(current_result):
+                return await _exec(current_result)
             return current_result
 
         return await _exec(func, *args, **kwargs)
 
-    return F(wrapped)
+    return FF >> wrapped
+
+
+def log(log_str: str, print_arg: bool = False) -> Any:
+    """utility function to log between steps, printing argument if needed"""
+
+    async def wrapped(last_result: Any) -> Any:
+        logger.info(log_str)
+        if print_arg:  # pragma: no cover
+            logger.info(last_result)
+        return last_result
+
+    return wrapped
+
+
+flog = log
 
 
 def lift(func: Function, *args: Any, **kwargs: Any) -> F:
     """make a partial function of the given func and ensure
     it will work in an async context
     """
-    new_func = cast(Callable[[], Any], functools.partial(func, *args, **kwargs))
-    return F(new_func) >> async_wrap
+    return FF >> cast(Callable[[], Any], functools.partial(func, *args, **kwargs))
 
 
 apartial = partial = lift
@@ -48,7 +65,7 @@ def f1(func: Function, extractor: Optional[Function] = None) -> F:
         return func(value)
 
     wrapped.__F1__ = True  # type: ignore
-    return F(wrapped)
+    return FF >> wrapped
 
 
 F1 = f1
@@ -65,7 +82,7 @@ def f0(func: Function) -> F:
         return func()
 
     wrapped.__F0__ = True  # type: ignore
-    return F(wrapped)
+    return FF >> wrapped
 
 
 F0 = f0
@@ -88,7 +105,7 @@ def spread_args(func: Function) -> F:
         # if to much args, slice the args to given length
         return func(*args)
 
-    return F(wrapped)
+    return FF >> wrapped
 
 
 spread = spread_args
@@ -105,7 +122,7 @@ def spread_kwargs(func: Function) -> F:
         new_kwargs = {key: kwargs[key] for key in args}
         return func(**new_kwargs)
 
-    return F(wrapped)
+    return FF >> wrapped
 
 
 spread_kw = spread_kwargs
@@ -113,7 +130,7 @@ spread_kw = spread_kwargs
 
 def ensure_f(func: Function) -> F:
     if not isinstance(func, F):
-        return F(func)
+        return FF >> func
     return func
 
 
@@ -125,7 +142,7 @@ def make_impure(func: Union[Function, F]) -> F:
     return func
 
 
-def side_effect(*func: Function) -> Union[List[F], F]:
+def side_effect(*func: Union[Function, F]) -> Union[List[F], F]:
     """
     take an array of function and tag it as side effects
     function
@@ -162,6 +179,10 @@ def identity(x: Any) -> Any:
 
 
 # helper functions
+def is_f(func: Any) -> bool:
+    return isinstance(func, F)
+
+
 def is_f0(func: Function) -> bool:
     return hasattr(func, "__F0__")
 

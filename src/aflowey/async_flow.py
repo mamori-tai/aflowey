@@ -1,11 +1,9 @@
 from copy import copy
-from inspect import iscoroutinefunction
-from typing import Any, Union, List, Dict
-
-from loguru import logger
+from typing import Any, Union, List, Dict, Optional
 
 from aflowey import ensure_callable, F, async_wrap
-from aflowey.functions import is_side_effect, get_name
+from aflowey.f import FF
+from aflowey.functions import is_side_effect, get_name, side_effect, named
 from aflowey.types import Function
 
 
@@ -14,6 +12,7 @@ class AsyncFlow:
     Describe an async flow chaining function
 
     >>>flow = (AsyncFlow() >> gen1 >> gen2 >> gen3)
+
     >>>await flow.run()
     """
 
@@ -32,18 +31,7 @@ class AsyncFlow:
     def ensure_coroutine_func(func: Union[Function, F]) -> F:
         side_effect_func = is_side_effect(func)
         named_func = get_name(func)
-
-        func = ensure_callable(func)
-
-        # ensuring F function are coroutine
-        if not iscoroutinefunction(func):
-            func = F(func) >> async_wrap
-
-        # ensuring we have only F function
-        if not isinstance(func, F):
-            func = F(func)
-
-        # resetting dunder custom attribute
+        func = FF >> ensure_callable(func) >> async_wrap
         if side_effect_func:
             func.__side_effect__ = True  # type: ignore
         if named_func:
@@ -86,18 +74,6 @@ class AsyncFlow:
         return await SingleFlowExecutor(self).execute_flow()
 
     @staticmethod
-    def log(log_str: str, print_arg: bool = False) -> Any:
-        """utility function to log between steps, printing argument if needed"""
-
-        async def wrapped(last_result: Any) -> Any:
-            logger.info(log_str)
-            if print_arg:  # pragma: no cover
-                logger.info(last_result)
-            return last_result
-
-        return wrapped
-
-    @staticmethod
     def from_args(*args: Any, **kwargs: Any) -> "AsyncFlow":
         """create a flow with given arguments as first input"""
         return AsyncFlow(*args, **kwargs)
@@ -118,4 +94,15 @@ class AsyncFlow:
 
 # aliases
 aflow = async_flow = AsyncFlow
-flog = aflow.log
+
+
+def step(
+    *func: Union[F, Function], name: Optional[str] = None, impure: bool = False
+) -> Union[Function, List[F], F]:
+    if len(func) > 1 and impure is False:
+        raise ValueError("Can not have several functions for impure method")
+    if impure:
+        new_func = side_effect(*func)
+        return new_func
+    named_func = func[0]
+    return named(named_func, name) if name is not None else named_func

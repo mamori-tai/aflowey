@@ -22,12 +22,13 @@ from aflowey.functions import (
     apartial,
     partial,
     identity,
+    log,
+    flog,
 )
 from aflowey.async_flow import (
     AsyncFlow,
     aflow,
     async_flow,
-    flog,
 )
 from aflowey.executor import (
     AsyncFlowExecutor,
@@ -69,4 +70,5 @@ __all__ = [
     "identity",
     "CANCEL_FLOW",
     "flog",
+    "log",
 ]

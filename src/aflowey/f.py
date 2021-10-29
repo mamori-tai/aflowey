@@ -1,6 +1,5 @@
 import functools
 from typing import Any
-from typing import Callable
 
 from aflowey.types import Function
 
@@ -15,10 +14,14 @@ class F:
 
     def __init__(self, func: Function) -> None:
         self.func = func
-        functools.update_wrapper(self, func)
+        if self.func is not None:
+            functools.update_wrapper(self, func)
 
-    def __rshift__(self, other: Callable[[Function], "F"]) -> "F":
+    def __rshift__(self, other: Any) -> "F":
         """equivalent of decoration"""
+        if self.func is None:
+            return F(other)
+
         return F(other(self.func))
 
     def __gt__(self, other: Function) -> "F":
@@ -36,3 +39,6 @@ class F:
 
     def __repr__(self) -> str:
         return f"<F instance: {repr(self.func)}>"
+
+
+FF = F(None)  # type: ignore
