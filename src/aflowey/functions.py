@@ -174,7 +174,7 @@ def is_side_effect(func: Function) -> bool:
     return hasattr(func, "__side_effect__")
 
 
-def get_name(func: Function) -> bool:
+def get_name(func: Function) -> str:
     if hasattr(func, "__named__"):
-        return func.__named__
+        return func.__named__  # type: ignore
     return ""
