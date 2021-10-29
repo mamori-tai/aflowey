@@ -8,6 +8,7 @@ from aflowey import aflow, CANCEL_FLOW, aexec
 from aflowey import async_exec
 from aflowey import flog
 from aflowey.async_flow import step as _
+from aflowey.executor import astarmap
 from aflowey.f import F, FF
 from aflowey.functions import (
     breaker,
@@ -281,3 +282,21 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
         logger.debug(result)
         self.assertEqual(result, (9, 4))
         logger.debug(flow.steps)
+
+    async def test_multiple_flows(self):
+        def pow_(z, y):
+            return z ** y
+
+        def get_flow(x):
+            return (
+                aflow.from_args(x)
+                >> identity
+            )
+
+        flow = (
+            aflow.empty()
+            >> _(x, name="first_step")
+            >> astarmap(flows=[lift(pow_, 1), lift(pow_, 2), get_flow])
+            >> flog(print_arg=True)
+        )
+        logger.debug(await flow.run())

@@ -1,7 +1,7 @@
 import asyncio
 from typing import List, Any, Awaitable, Union, cast, overload
 
-from aflowey import AsyncFlow, aflow
+from aflowey import AsyncFlow, aflow, lift
 from aflowey.single_executor import SingleFlowExecutor
 
 FlowOrListFlow = Union[List[AsyncFlow], AsyncFlow]
@@ -70,5 +70,15 @@ class AsyncFlowExecutor:
         executor = AsyncFlowExecutor(new_flows)
         return executor
 
+    @staticmethod
+    def starmap(flows=[], transformer_func=None):
+        assert isinstance(flows, list), "flows must be a list of AsyncFlow or aws"
+
+        def wrapper(x):
+            new_flows = [AsyncFlowExecutor.ensure_flow(lift(value, x)) for value in flows]
+            return AsyncFlowExecutor(new_flows).run
+        return wrapper
+
 
 async_exec = aexec = AsyncFlowExecutor.executor
+astarmap = AsyncFlowExecutor.starmap
