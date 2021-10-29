@@ -3,7 +3,7 @@ from typing import Any, Union, List, cast
 from loguru import logger
 
 from aflowey import AsyncFlow, F
-from aflowey.functions import is_f0, is_side_effect
+from aflowey.functions import is_f0, is_side_effect, get_name
 
 
 class SingleFlowExecutor:
@@ -34,9 +34,7 @@ class SingleFlowExecutor:
     @staticmethod
     def get_step_name(func: F, index: int) -> str:
         """get the step name"""
-        if hasattr(func, "__named__"):
-            return cast(str, func.__named__)  # type: ignore
-        return str(index)
+        return get_name(func) or str(index)
 
     def save_step(self, task: F, index: int, current_args: Any) -> None:
         """save step state in flow attribute"""
@@ -70,9 +68,8 @@ class SingleFlowExecutor:
         first_aws = self.flow.aws[0]
         current_args = await self.execute_first_step(first_aws)
 
-        # iterate over its tasks
         for index, task in enumerate(self.flow.aws[1:]):
-            # get the result of a task
+
             result = await task(current_args)
 
             if is_side_effect(task):
@@ -83,8 +80,7 @@ class SingleFlowExecutor:
                 continue  # pragma: no cover
 
             result = await self.check_and_execute_flow_if_needed(result)
-            # cancel ?
-            if self.need_to_cancel_flow(result):
+            if self.need_to_cancel_flow(result):  # check if we need to cancel the flow
                 break
 
             current_args = result
@@ -94,4 +90,3 @@ class SingleFlowExecutor:
 
 
 CANCEL_FLOW = SingleFlowExecutor.CANCEL_FLOW
-FlowOrListFlow = Union[List[AsyncFlow], AsyncFlow]

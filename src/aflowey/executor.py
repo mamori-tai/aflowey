@@ -1,8 +1,10 @@
 import asyncio
-from typing import List, Any, Coroutine, Awaitable
+from typing import List, Any, Awaitable, Union
 
 from aflowey import AsyncFlow
-from aflowey.single_executor import FlowOrListFlow, SingleFlowExecutor
+from aflowey.single_executor import SingleFlowExecutor
+
+FlowOrListFlow = Union[List[AsyncFlow], AsyncFlow]
 
 
 class AsyncFlowExecutor:
@@ -13,13 +15,9 @@ class AsyncFlowExecutor:
 
     """
 
-    def __init__(
-        self, flows: List[AsyncFlow] = [], run_in_thread_pool: bool = False
-    ) -> None:
+    def __init__(self, flows: List[AsyncFlow] = []) -> None:
         self.flows = []
         self.flows.append(flows)
-        # to be run in parallel
-        self.run_in_thread_pool = run_in_thread_pool
 
     def __or__(self, flow: List[AsyncFlow]) -> "AsyncFlowExecutor":
         """add a flow to execute in parallel"""
