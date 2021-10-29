@@ -13,7 +13,9 @@ class AsyncFlowExecutor:
 
     """
 
-    def __init__(self, flows: List[AsyncFlow] = [], run_in_thread_pool: bool = False) -> None:
+    def __init__(
+        self, flows: List[AsyncFlow] = [], run_in_thread_pool: bool = False
+    ) -> None:
         self.flows = []
         self.flows.append(flows)
         # to be run in parallel
@@ -32,9 +34,7 @@ class AsyncFlowExecutor:
     def exec_or_gather(self, flow: FlowOrListFlow) -> Awaitable[Any]:
         execute = self._execute_one_flow
         if isinstance(flow, list):
-            return asyncio.gather(
-                *[execute(flow) for flow in flow]
-            )
+            return asyncio.gather(*[execute(flow) for flow in flow])
         return execute(flow)
 
     async def run(self, **kwargs: Any) -> Any:

@@ -17,11 +17,11 @@ class F:
         self.func = func
         functools.update_wrapper(self, func)
 
-    def __rshift__(self, other: Callable[[Function], 'F']) -> 'F':
+    def __rshift__(self, other: Callable[[Function], "F"]) -> "F":
         """equivalent of decoration"""
         return F(other(self.func))
 
-    def __gt__(self, other: Function) -> 'F':
+    def __gt__(self, other: Function) -> "F":
         """function composition"""
 
         @functools.wraps(other)
@@ -36,4 +36,3 @@ class F:
 
     def __repr__(self) -> str:
         return f"<F instance: {repr(self.func)}>"
-

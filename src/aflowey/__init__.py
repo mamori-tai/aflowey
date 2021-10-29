@@ -21,7 +21,7 @@ from aflowey.functions import (
     impure,
     apartial,
     partial,
-    identity
+    identity,
 )
 from aflowey.async_flow import (
     AsyncFlow,

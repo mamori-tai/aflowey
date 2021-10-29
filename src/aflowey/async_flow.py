@@ -5,7 +5,7 @@ from typing import Any, Union, List, Dict
 from loguru import logger
 
 from aflowey import ensure_callable, F, async_wrap
-from aflowey.functions import is_side_effect, is_named
+from aflowey.functions import is_side_effect, get_name
 from aflowey.types import Function
 
 
@@ -31,10 +31,8 @@ class AsyncFlow:
     @staticmethod
     def ensure_coroutine_func(func: Union[Function, F]) -> F:
         side_effect_func = is_side_effect(func)
-        named_func = is_named(func)
+        named_func = get_name(func)
 
-        logger.debug(side_effect_func)
-        logger.debug(named_func)
         func = ensure_callable(func)
 
         # ensuring F function are coroutine
@@ -53,7 +51,9 @@ class AsyncFlow:
 
         return func
 
-    def __rshift__(self, aws: Union[List[Union[F, Function]], Union[F, Function]]) -> "AsyncFlow":
+    def __rshift__(
+        self, aws: Union[List[Union[F, Function]], Union[F, Function]]
+    ) -> "AsyncFlow":
         """add a new step to the flow
 
         Args:
@@ -62,7 +62,6 @@ class AsyncFlow:
         if isinstance(aws, list):
             self.aws += [self.ensure_coroutine_func(a) for a in aws]
         else:
-            logger.debug(aws)
             self.aws.append(self.ensure_coroutine_func(aws))
 
         return self
@@ -83,6 +82,7 @@ class AsyncFlow:
             coroutine
         """
         from aflowey.single_executor import SingleFlowExecutor
+
         return await SingleFlowExecutor(self).execute_flow()
 
     @staticmethod
@@ -100,7 +100,6 @@ class AsyncFlow:
     @staticmethod
     def from_args(*args: Any, **kwargs: Any) -> "AsyncFlow":
         """create a flow with given arguments as first input"""
-        logger.debug(kwargs)
         return AsyncFlow(*args, **kwargs)
 
     @staticmethod

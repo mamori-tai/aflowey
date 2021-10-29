@@ -1,4 +1,4 @@
-from typing import Any, Union, List, Coroutine, overload, Callable, Awaitable, cast
+from typing import Any, Union, List, cast
 
 from loguru import logger
 
@@ -15,7 +15,9 @@ class SingleFlowExecutor:
         self.flow = flow
 
     @staticmethod
-    async def check_and_execute_flow_if_needed(maybe_flow: Union[Any, AsyncFlow]) -> Any:
+    async def check_and_execute_flow_if_needed(
+        maybe_flow: Union[Any, AsyncFlow]
+    ) -> Any:
         """check if we have an async flow and execute it"""
         if isinstance(maybe_flow, AsyncFlow):
             return await SingleFlowExecutor(maybe_flow).execute_flow()
@@ -25,7 +27,7 @@ class SingleFlowExecutor:
     def need_to_cancel_flow(result: Any) -> bool:
         """check if we need to cancel flow checking sentinel"""
         if result is SingleFlowExecutor.CANCEL_FLOW:
-            logger.info("Received sentinel object, canceling flow...")
+            logger.debug("Received sentinel object, canceling flow...")
             return True
         return False
 
@@ -62,7 +64,6 @@ class SingleFlowExecutor:
     async def execute_flow(self) -> Any:
         """Main function to execute a flow"""
         if not self.flow.aws:
-            logger.debug("no aws")
             return None
 
         # get first step

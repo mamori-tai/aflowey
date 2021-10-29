@@ -7,7 +7,18 @@ from loguru import logger
 from aflowey import aflow, CANCEL_FLOW
 from aflowey import async_exec
 from aflowey import flog
-from aflowey.functions import breaker, named, spread_kw, make_impure, F0, F1, impure, lift, spread, identity
+from aflowey.functions import (
+    breaker,
+    named,
+    spread_kw,
+    make_impure,
+    F0,
+    F1,
+    impure,
+    lift,
+    spread,
+    identity,
+)
 from aflowey.f import F
 
 
@@ -232,8 +243,6 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
         class MyClass:
             def print_a(self):
                 print(1)
+
         a = MyClass()
-        await (
-            aflow.empty()
-            >> a.print_a
-        ).run()
+        await (aflow.empty() >> a.print_a).run()

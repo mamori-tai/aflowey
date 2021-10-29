@@ -2,8 +2,6 @@ import functools
 import inspect
 from typing import Any, Callable, List, Union, Iterable, Optional, cast
 
-from loguru import logger
-
 from aflowey import F
 from aflowey.types import Function
 
@@ -102,7 +100,6 @@ def spread_kwargs(func: Function) -> F:
 
     @functools.wraps(func)
     def wrapped(**kwargs: Any) -> Any:
-        logger.debug(kwargs)
         arg_spec = inspect.getfullargspec(func)
         args = set(arg_spec.args + arg_spec.kwonlyargs) - set(["self"])
         new_kwargs = {key: kwargs[key] for key in args}
@@ -123,7 +120,6 @@ def ensure_f(func: Function) -> F:
 def make_impure(func: Union[Function, F]) -> F:
     # automatically create new function when the function
     # is a bound method and has no other input args
-    logger.debug(func)
     func = ensure_f(func)
     func.__side_effect__ = True  # type: ignore
     return func
@@ -178,5 +174,7 @@ def is_side_effect(func: Function) -> bool:
     return hasattr(func, "__side_effect__")
 
 
-def is_named(func: Function) -> bool:
-    return hasattr(func, "__named__")
+def get_name(func: Function) -> bool:
+    if hasattr(func, "__named__"):
+        return func.__named__
+    return ""
