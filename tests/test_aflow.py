@@ -2,16 +2,13 @@ import asyncio
 import unittest
 from operator import attrgetter
 
+from loguru import logger
+
 from aflowey import aflow, CANCEL_FLOW
 from aflowey import async_exec
 from aflowey import flog
-from aflowey.f import breaker
+from aflowey.functions import breaker, named, spread_kw, make_impure, F0, F1, impure, lift, spread, identity
 from aflowey.f import F
-from aflowey.f import F1
-from aflowey.f import identity
-from aflowey.f import impure
-from aflowey.f import lift
-from aflowey.f import spread
 
 
 def x():
@@ -52,7 +49,7 @@ def spread_function(x):
 class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
     simple_flow = aflow.empty() >> x
     impure_flow = aflow.from_flow(simple_flow) >> impure(
-        print_some_stuff, print_some_stuff
+        F0(print_some_stuff), F0(print_some_stuff)
     )
 
     async def test_flow_init(self):
@@ -84,7 +81,7 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
     async def test_impure_from_instance(self):
         test = Toto()
         flow = aflow.from_flow(TestAsyncFlow.simple_flow) >> impure(
-            test.print_some_stuff
+            F0(test.print_some_stuff)
         )
         await flow.run()
 
@@ -196,24 +193,47 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
             async def bound_method(self):
                 print(a)
                 await asyncio.sleep(0.1)
+
         a = MyClass()
-        f = (
-            aflow.from_args(1)
-            >> impure(a.bound_method)
-        )
+        f = aflow.from_args(1) >> impure(F0(a.bound_method))
         r = await f.run()
-        self.assertEqual(r, 1)
+        self.assertEqual(r, (1,))
 
-        f = (
-                aflow.empty()
-                >> impure(a.bound_method)
-        )
+        f = aflow.empty() >> impure(F0(a.bound_method))
+        r = await f.run()
+        self.assertEqual(r, (None,))
+
+        f = aflow.empty() >> a.bound_method
         r = await f.run()
         self.assertEqual(r, None)
 
+    async def test_flow_with_step_name(self):
+        toto = Toto()
         f = (
-                aflow.empty()
-                >> a.bound_method
+            aflow.empty()
+            >> named(1, "first_step")
+            >> named(impure(toto.print_x), "second_step")
         )
-        r = await f.run()
-        self.assertEqual(r, None)
+        await f.run()
+        logger.debug(f.steps)
+
+    async def test_kw_flow(self):
+        def check_data(a, b, c):
+            print(a, b, c)
+
+        f = (
+            aflow.from_args(a=1, b=2, c=3)
+            >> ((F(check_data) >> spread_kw) >> make_impure)
+            # >> impure(spread_kw(check_data))
+        )
+        await f.run()
+
+    async def test_workflow_no_f(self):
+        class MyClass:
+            def print_a(self):
+                print(1)
+        a = MyClass()
+        await (
+            aflow.empty()
+            >> a.print_a
+        ).run()

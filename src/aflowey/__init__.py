@@ -1,11 +1,15 @@
 from aflowey.f import (
     F,
+)
+from aflowey.functions import (
     async_wrap,
     ensure_callable,
     side_effect,
     may_fail,
     spread,
     spread_args,
+    spread_kw,
+    spread_kwargs,
     f0,
     F0,
     f1,
@@ -15,18 +19,23 @@ from aflowey.f import (
     lift,
     imp,
     impure,
-    identity,
     apartial,
     partial,
+    identity
 )
 from aflowey.async_flow import (
     AsyncFlow,
     aflow,
     async_flow,
     flog,
+)
+from aflowey.executor import (
     AsyncFlowExecutor,
     async_exec,
     aexec,
+)
+
+from aflowey.single_executor import (
     CANCEL_FLOW,
 )
 
@@ -45,7 +54,6 @@ __all__ = [
     "lift",
     "imp",
     "impure",
-    "identity",
     "AsyncFlow",
     "aflow",
     "async_flow",
@@ -56,6 +64,9 @@ __all__ = [
     "partial",
     "spread",
     "spread_args",
+    "spread_kw",
+    "spread_kwargs",
+    "identity",
     "CANCEL_FLOW",
     "flog",
 ]

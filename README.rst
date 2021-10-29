@@ -150,12 +150,17 @@ Execute several flows asynchronously:
 It can be boring to create function that exactly matches arity of the flow.
 Aflowey provide some higher order functions to help, see:
 
-* lift
-* F0
-* F1
-* spread
+* lift: use partial to create new method
+* F0: from a 0 argument function, create one argument function to fit the arity of the flow
+* F1: create a new function with an extra parameter to process input of the flow step
+* spread: create a new function which spread an iterable of arguments into the given function (*args)
+* spread_kw: create a new function which spread kw arguments into the given function (**kwargs)
 
-If you have ideas...
+The fn library provide other interesting functions like:
+
+* flip
+
+If you have any other ideas...
 
 Contributing
 ------------
