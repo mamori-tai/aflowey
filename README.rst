@@ -39,7 +39,7 @@ Aflowey
 Features
 --------
 
-* Utilities to perform flow with coroutine functions
+* Utilities to describe and execute flow with coroutine functions
 * Easily launch several flows simultaneously
 * Strong focus on readability
 
@@ -153,8 +153,8 @@ Aflowey provide some higher order functions to help, see:
 * lift: use partial to create new method
 * F0: from a 0 argument function, create one argument function to fit the arity of the flow
 * F1: create a new function with an extra parameter to process input of the flow step
-* spread: create a new function which spread an iterable of arguments into the given function (*args)
-* spread_kw: create a new function which spread kw arguments into the given function (**kwargs)
+* spread: create a new function which spread an iterable of arguments into the given function
+* spread_kw: create a new function which spread kw arguments into the given function
 
 The fn library provide other interesting functions like:
 
