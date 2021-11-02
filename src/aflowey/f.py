@@ -1,3 +1,4 @@
+import asyncio
 import functools
 from typing import Any
 
@@ -39,6 +40,13 @@ class F:
 
     def __repr__(self) -> str:
         return f"<F instance: {repr(self.func)}>"
+
+    @property
+    def is_coroutine_function(self):
+        func = self.func
+        while isinstance(func, F):
+            func = func.func
+        return asyncio.iscoroutinefunction(func)
 
 
 FF = F(None)  # type: ignore

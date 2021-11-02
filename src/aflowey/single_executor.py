@@ -1,9 +1,51 @@
-from typing import Any, Union, List, cast
+import asyncio
+import functools
+from typing import Any, Union
 
 from loguru import logger
 
 from aflowey import AsyncFlow, F
 from aflowey.functions import is_f0, is_side_effect, get_name
+from aflowey.types import Function
+
+
+async def _exec(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
+    current_result = function(*a, **kw)
+    while asyncio.iscoroutine(current_result):
+        current_result = await current_result
+    if callable(current_result):
+        return await _exec(current_result)
+    return current_result
+
+
+def _exec_synchronously(fn, *args):
+    result = fn(*args)
+    while callable(result):
+        result = result()
+    return result
+
+
+def async_wrap(func: F) -> F:
+    """wrap the given into a coroutine function and try
+    calling it
+    """
+
+    @functools.wraps(func)
+    async def wrapped(*args: Any, **kwargs: Any) -> Any:
+        return await _exec(func, *args, **kwargs)
+
+    return wrapped
+
+
+def check_and_run_step(executor, fn, *args, **kwargs):
+    if fn.is_coroutine_function:
+        new_fn = async_wrap(fn)
+        return asyncio.create_task(new_fn(*args, **kwargs))
+    if kwargs:
+        fn = functools.partial(fn, **kwargs)
+    loop = asyncio.get_event_loop()
+    logger.debug("Running in thread loop executor")
+    return loop.run_in_executor(executor, _exec_synchronously, fn, *args)
 
 
 class SingleFlowExecutor:
@@ -11,16 +53,18 @@ class SingleFlowExecutor:
 
     CANCEL_FLOW = object()
 
-    def __init__(self, flow: AsyncFlow) -> None:
+    def __init__(self, flow: AsyncFlow, executor=None) -> None:
         self.flow = flow
+        self.executor = executor
 
     @staticmethod
     async def check_and_execute_flow_if_needed(
-        maybe_flow: Union[Any, AsyncFlow]
+        maybe_flow: Union[Any, AsyncFlow],
+        executor
     ) -> Any:
         """check if we have an async flow and execute it"""
         if isinstance(maybe_flow, AsyncFlow):
-            return await SingleFlowExecutor(maybe_flow).execute_flow()
+            return await SingleFlowExecutor(maybe_flow, executor).execute_flow()
         return maybe_flow
 
     @staticmethod
@@ -50,10 +94,12 @@ class SingleFlowExecutor:
         if not self.flow.args and not self.flow.kwargs and is_f0(first_aws):
             self.flow.args = (None,)
 
-        res = await first_aws(*self.flow.args, **self.flow.kwargs)
+        res = await check_and_run_step(
+            self.executor, first_aws, *self.flow.args, **self.flow.kwargs
+        )
         current_args = self._check_current_args_if_side_effect(first_aws, res)
         # if flow run it
-        current_args = await self.check_and_execute_flow_if_needed(current_args)
+        current_args = await self.check_and_execute_flow_if_needed(current_args, self.executor)
 
         # memorize name
         self.save_step(first_aws, 0, current_args)
@@ -70,7 +116,7 @@ class SingleFlowExecutor:
 
         for index, task in enumerate(self.flow.aws[1:]):
 
-            result = await task(current_args)
+            result = await check_and_run_step(self.executor, task, current_args)
 
             if is_side_effect(task):
                 # side effect task, does not return a value
@@ -79,7 +125,7 @@ class SingleFlowExecutor:
                     break  # pragma: no cover
                 continue  # pragma: no cover
 
-            result = await self.check_and_execute_flow_if_needed(result)
+            result = await self.check_and_execute_flow_if_needed(result, self.executor)
             if self.need_to_cancel_flow(result):  # check if we need to cancel the flow
                 break
 
