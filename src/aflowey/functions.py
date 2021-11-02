@@ -1,3 +1,4 @@
+import asyncio
 import functools
 import inspect
 from typing import Any, Callable, List, Union, Iterable, Optional, cast
@@ -5,28 +6,16 @@ from typing import Any, Callable, List, Union, Iterable, Optional, cast
 from loguru import logger
 
 from aflowey import F
-from aflowey.f import FF
 from aflowey.types import Function
 
 
-def async_wrap(func: F) -> F:
-    """wrap the given into a coroutine function and try
-    calling it
-    """
+def async_wrap(func):
 
     @functools.wraps(func)
-    async def wrapped(*args: Any, **kwargs: Any) -> Any:
-        async def _exec(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
-            current_result = function(*a, **kw)
-            if inspect.iscoroutine(current_result):
-                current_result = await current_result
-            if callable(current_result):
-                return await _exec(current_result)
-            return current_result
+    async def wrapper(*a, **kw):
+        return func(*a, **kw)
 
-        return await _exec(func, *args, **kwargs)
-
-    return FF >> wrapped
+    return F(wrapper)
 
 
 def log(log_str: str = "", print_arg: bool = False) -> Any:
@@ -49,7 +38,7 @@ def lift(func: Function, *args: Any, **kwargs: Any) -> F:
     """make a partial function of the given func and ensure
     it will work in an async context
     """
-    return FF >> cast(Callable[[], Any], functools.partial(func, *args, **kwargs))
+    return F(cast(Callable[[], Any], functools.partial(func, *args, **kwargs)))
 
 
 apartial = partial = lift
@@ -60,13 +49,17 @@ def f1(func: Function, extractor: Optional[Function] = None) -> F:
     to add an extractor to work on the input argument.
     """
 
+    is_coroutine = asyncio.iscoroutinefunction(func)
+
     @functools.wraps(func)
     def wrapped(arg1: Any) -> Any:
         value = arg1 if extractor is None else extractor(arg1)
         return func(value)
 
-    wrapped.__F1__ = True  # type: ignore
-    return FF >> wrapped
+    wrapped_fn = async_wrap(wrapped) if is_coroutine else F(wrapped)
+    wrapped_fn.__F1__ = True  # type: ignore
+
+    return wrapped_fn
 
 
 F1 = f1
@@ -77,13 +70,16 @@ def f0(func: Function) -> F:
     function takes exactly one argument and does not pass it to the wrapped
     function. It allows using a 0 arity function in a flow relatively easily.
     """
+    is_coroutine = asyncio.iscoroutinefunction(func)
 
     @functools.wraps(func)
     def wrapped(arg1: Any) -> Any:
         return func()
 
-    wrapped.__F0__ = True  # type: ignore
-    return FF >> wrapped
+    wrapped_fn = async_wrap(wrapped) if is_coroutine else F(wrapped)
+    wrapped_fn.__F0__ = True  # type: ignore
+
+    return wrapped_fn
 
 
 F0 = f0
@@ -101,12 +97,15 @@ def spread_args(func: Function) -> F:
     """create a function which takes an iterable of args
     and spread it into the given function"""
 
+    is_coroutine = asyncio.iscoroutinefunction(func)
+
     @functools.wraps(func)
     def wrapped(args: Iterable[Any]) -> Any:
         # if to much args, slice the args to given length
         return func(*args)
 
-    return FF >> wrapped
+    wrapped_fn = async_wrap(wrapped) if is_coroutine else F(wrapped)
+    return wrapped_fn
 
 
 spread = spread_args
@@ -116,6 +115,8 @@ def spread_kwargs(func: Function) -> F:
     """create a function which takes a mapping of kwargs
     and spread it into the given function"""
 
+    is_coroutine = asyncio.iscoroutinefunction(func)
+
     @functools.wraps(func)
     def wrapped(**kwargs: Any) -> Any:
         arg_spec = inspect.getfullargspec(func)
@@ -123,7 +124,8 @@ def spread_kwargs(func: Function) -> F:
         new_kwargs = {key: kwargs[key] for key in args}
         return func(**new_kwargs)
 
-    return FF >> wrapped
+    wrapped_fn = async_wrap(wrapped) if is_coroutine else F(wrapped)
+    return wrapped_fn
 
 
 spread_kw = spread_kwargs
@@ -131,7 +133,7 @@ spread_kw = spread_kwargs
 
 def ensure_f(func: Function) -> F:
     if not isinstance(func, F):
-        return FF >> func
+        return F(func)
     return func
 
 

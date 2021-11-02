@@ -1,9 +1,8 @@
 from copy import copy
 from typing import Any, Union, List, Dict, Optional
 
-from aflowey import ensure_callable, F, async_wrap
-from aflowey.f import FF
-from aflowey.functions import is_side_effect, get_name, side_effect, named
+from aflowey import ensure_callable, F
+from aflowey.functions import side_effect, named, ensure_f
 from aflowey.types import Function
 
 
@@ -28,16 +27,9 @@ class AsyncFlow:
         self.steps: Dict[str, Any] = {}
 
     @staticmethod
-    def ensure_coroutine_func(func: Union[Function, F]) -> F:
-        side_effect_func = is_side_effect(func)
-        named_func = get_name(func)
-        func = FF >> ensure_callable(func) >> async_wrap
-        if side_effect_func:
-            func.__side_effect__ = True  # type: ignore
-        if named_func:
-            func.__named__ = named_func  # type: ignore
-
-        return func
+    def ensure_f_function(func: Union[Function, F]) -> F:
+        new_func = ensure_callable(func)
+        return ensure_f(new_func)
 
     def __rshift__(
         self, aws: Union[List[Union[F, Function]], Union[F, Function]]
@@ -48,9 +40,9 @@ class AsyncFlow:
             aws: list of callable or callable
         """
         if isinstance(aws, list):
-            self.aws += [self.ensure_coroutine_func(a) for a in aws]
+            self.aws += [self.ensure_f_function(a) for a in aws]
         else:
-            self.aws.append(self.ensure_coroutine_func(aws))
+            self.aws.append(self.ensure_f_function(aws))
 
         return self
 
@@ -63,7 +55,7 @@ class AsyncFlow:
         new_flow.aws = aws
         return new_flow
 
-    async def run(self) -> Any:
+    async def run(self, executor=None) -> Any:
         """run the flow
 
         Returns:
@@ -71,7 +63,7 @@ class AsyncFlow:
         """
         from aflowey.single_executor import SingleFlowExecutor
 
-        return await SingleFlowExecutor(self).execute_flow()
+        return await SingleFlowExecutor(self, executor).execute_flow()
 
     @staticmethod
     def from_args(*args: Any, **kwargs: Any) -> "AsyncFlow":

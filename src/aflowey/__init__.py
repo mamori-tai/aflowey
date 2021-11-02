@@ -2,7 +2,6 @@ from aflowey.f import (
     F,
 )
 from aflowey.functions import (
-    async_wrap,
     ensure_callable,
     side_effect,
     may_fail,
@@ -42,7 +41,6 @@ from aflowey.single_executor import (
 
 __all__ = [
     "F",
-    "async_wrap",
     "ensure_callable",
     "side_effect",
     "f0",

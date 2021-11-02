@@ -8,7 +8,7 @@ from aflowey import aflow, CANCEL_FLOW, aexec
 from aflowey import async_exec
 from aflowey import flog
 from aflowey.async_flow import step as _
-from aflowey.executor import astarmap
+from aflowey.executor import astarmap, ExecutorType
 from aflowey.f import F, FF
 from aflowey.functions import (
     breaker,
@@ -71,7 +71,7 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
 
     async def test_flow_exec_parallel(self):
         r1, r2 = await (
-            async_exec(TestAsyncFlow.simple_flow) | TestAsyncFlow.impure_flow
+            async_exec().from_flows(TestAsyncFlow.simple_flow) | TestAsyncFlow.impure_flow
         ).run()
         self.assertEqual(r1, 1)
         self.assertEqual(r2, 1)
@@ -79,7 +79,7 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
     async def test_flow_exec_parallel_multiple(self):
 
         (r0, r1), r2 = await (
-            async_exec([TestAsyncFlow.simple_flow, TestAsyncFlow.simple_flow])
+            async_exec().from_flows([TestAsyncFlow.simple_flow, TestAsyncFlow.simple_flow])
             | TestAsyncFlow.impure_flow
         ).run()
         self.assertEqual(r0, 1)
@@ -161,15 +161,13 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
         async def async_toto(number, number_):
             return number + number_
 
-        def toto(a_number, number, number_):
-            print(a_number)
+        async def toto(a_number, number, number_):
             return lift(async_toto, number=number, number_=number_)
 
         async def toto_async(a_number, number, number_):
-            print(a_number)
             return lift(async_toto, number=number, number_=number_)
 
-        def tata(a_num):
+        async def tata(a_num):
             return lift(toto, a_number=a_num, number=1, number_=1)
 
         func = lift(toto, number=4, number_=4)
@@ -212,7 +210,6 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
     async def test_flow_with_impure_bound_method(self):
         class MyClass:
             async def bound_method(self):
-                print(a)
                 await asyncio.sleep(0.1)
 
         a = MyClass()
@@ -262,9 +259,13 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
             await asyncio.sleep(0.01)
             return y
 
-        ((a, b, c),) = await aexec(
-            [lift(print_a_value, 1), lift(print_a_value, 2), lift(print_a_value, 3)]
-        ).run()
+        ((a, b, c),) = (
+            await aexec()
+            .from_flows(
+                [lift(print_a_value, 1), lift(print_a_value, 2), lift(print_a_value, 3)]
+            )
+            .run()
+        )
         self.assertEqual((a, b, c), (1, 2, 3))
 
     async def test_flow_step(self):
@@ -288,10 +289,7 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
             return z ** y
 
         def get_flow(x):
-            return (
-                aflow.from_args(x)
-                >> identity
-            )
+            return aflow.from_args(x) >> identity
 
         flow = (
             aflow.empty()
@@ -299,4 +297,22 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
             >> astarmap(flows=[lift(pow_, 1), lift(pow_, 2), get_flow])
             >> flog(print_arg=True)
         )
+        self.assertEqual(await flow.run(), [1, 2, 1])
         logger.debug(await flow.run())
+
+    async def test_with_statement(self):
+        def pow_(z, y):
+            return z ** y
+
+        def get_flow(x):
+            return aflow.from_args(x) >> identity
+
+        flow = (
+            aflow.empty()
+            >> _(x, name="first_step")
+            >> astarmap(flows=[lift(pow_, 1), lift(pow_, 2), get_flow])
+            >> flog(print_arg=True)
+        )
+        with aexec(ExecutorType.THREAD_POOL) as executor:
+            (a, b, c),  = await executor.from_flows(flow).run()
+            self.assertEqual((a, b, c), (1, 2, 1))
