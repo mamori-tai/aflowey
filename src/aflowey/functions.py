@@ -9,10 +9,16 @@ from aflowey import F
 from aflowey.types import Function
 
 
-def async_wrap(func):
+def async_wrap(func: Function) -> F:
+    """wrap a function into a coroutine function
+    Args:
+        func: callable
+    Returns:
+        F instance
+    """
 
     @functools.wraps(func)
-    async def wrapper(*a, **kw):
+    async def wrapper(*a: Any, **kw: Any) -> Any:
         return func(*a, **kw)
 
     return F(wrapper)
@@ -132,12 +138,16 @@ spread_kw = spread_kwargs
 
 
 def ensure_f(func: Function) -> F:
+    """wrap the given function into a F instance"""
     if not isinstance(func, F):
         return F(func)
     return func
 
 
 def make_impure(func: Union[Function, F]) -> F:
+    """tags the given function as impure, i.e. consume an argument
+    but does not create new one
+    """
     # automatically create new function when the function
     # is a bound method and has no other input args
     func = ensure_f(func)
@@ -170,6 +180,7 @@ def ensure_callable(x: Union[Any, Function]) -> Function:
 
 
 def named(func: Union[Function, F], name: str) -> F:
+    """tags a function as a named function"""
     if not callable(func):
         func = ensure_callable(func)
     func = ensure_f(func)

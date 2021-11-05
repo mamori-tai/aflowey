@@ -42,7 +42,7 @@ class F:
         return f"<F instance: {repr(self.func)}>"
 
     @property
-    def is_coroutine_function(self):
+    def is_coroutine_function(self) -> bool:
         func = self.func
         while isinstance(func, F):
             func = func.func
