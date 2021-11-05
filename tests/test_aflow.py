@@ -8,7 +8,7 @@ from aflowey import aflow, CANCEL_FLOW, aexec
 from aflowey import async_exec
 from aflowey import flog
 from aflowey.async_flow import step as _
-from aflowey.executor import astarmap, ExecutorType
+from aflowey.executor import astarmap, ExecutorType, run_flows
 from aflowey.f import F, FF
 from aflowey.functions import (
     breaker,
@@ -71,7 +71,8 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
 
     async def test_flow_exec_parallel(self):
         r1, r2 = await (
-            async_exec().from_flows(TestAsyncFlow.simple_flow) | TestAsyncFlow.impure_flow
+            async_exec().from_flows(TestAsyncFlow.simple_flow)
+            | TestAsyncFlow.impure_flow
         ).run()
         self.assertEqual(r1, 1)
         self.assertEqual(r2, 1)
@@ -79,7 +80,9 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
     async def test_flow_exec_parallel_multiple(self):
 
         (r0, r1), r2 = await (
-            async_exec().from_flows([TestAsyncFlow.simple_flow, TestAsyncFlow.simple_flow])
+            async_exec().from_flows(
+                [TestAsyncFlow.simple_flow, TestAsyncFlow.simple_flow]
+            )
             | TestAsyncFlow.impure_flow
         ).run()
         self.assertEqual(r0, 1)
@@ -294,25 +297,24 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
         flow = (
             aflow.empty()
             >> _(x, name="first_step")
-            >> astarmap(flows=[lift(pow_, 1), lift(pow_, 2), get_flow])
+            >> astarmap(lift(pow_, 1), lift(pow_, 2), get_flow)
             >> flog(print_arg=True)
         )
         self.assertEqual(await flow.run(), [1, 2, 1])
-        logger.debug(await flow.run())
 
     async def test_with_statement(self):
         def pow_(z, y):
             return z ** y
 
-        def get_flow(x):
-            return aflow.from_args(x) >> identity
+        def get_flow(y):
+            return aflow.from_args(y) >> identity
 
-        flow = (
-            aflow.empty()
-            >> _(x, name="first_step")
-            >> astarmap(flows=[lift(pow_, 1), lift(pow_, 2), get_flow])
-            >> flog(print_arg=True)
-        )
         with aexec(ExecutorType.THREAD_POOL) as executor:
-            (a, b, c),  = await executor.from_flows(flow).run()
+            flow = (
+                aflow.empty()
+                >> _(x, name="first_step")
+                >> run_flows(lift(pow_, 1), lift(pow_, 2), get_flow, executor=executor)
+                >> flog(print_arg=True)
+            )
+            ((a, b, c),) = await executor.from_flows(flow).run()
             self.assertEqual((a, b, c), (1, 2, 1))

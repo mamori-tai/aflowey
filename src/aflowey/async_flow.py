@@ -3,7 +3,7 @@ from typing import Any, Union, List, Dict, Optional
 
 from aflowey import ensure_callable, F
 from aflowey.functions import side_effect, named, ensure_f
-from aflowey.types import Function
+from aflowey.types import Function, Executor
 
 
 class AsyncFlow:
@@ -28,7 +28,7 @@ class AsyncFlow:
 
     @staticmethod
     def ensure_f_function(func: Union[Function, F]) -> F:
-        new_func = ensure_callable(func)
+        new_func: Function = ensure_callable(func)
         return ensure_f(new_func)
 
     def __rshift__(
@@ -55,7 +55,7 @@ class AsyncFlow:
         new_flow.aws = aws
         return new_flow
 
-    async def run(self, executor=None) -> Any:
+    async def run(self, executor: Executor = None) -> Any:
         """run the flow
 
         Returns:
