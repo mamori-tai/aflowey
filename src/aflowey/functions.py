@@ -137,7 +137,7 @@ def spread_kwargs(func: Function) -> F:
 spread_kw = spread_kwargs
 
 
-def lift(f: Function, lift_op: Union[Type[map[Any]], Function] = map) -> F:
+def lift(f: Function, lift_op: Function = map) -> F:  # type: ignore[assignment]
     return p(lift_op, f)
 
 
