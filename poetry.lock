@@ -1067,11 +1067,7 @@ tests = ["codecov", "scikit-build", "cmake", "ninja", "pybind11", "pytest", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-<<<<<<< HEAD
 content-hash = "c9841b39c6d2572e49b69b9c3575cddd223adfde595fb86c8432a92c31c3c28c"
-=======
-content-hash = "5b26dc97959706ff8a72077eff5811a7a2054932519f565fcfb110cc4f2dba28"
->>>>>>> 338e99d (Lift function renamed)
 
 [metadata.files]
 alabaster = [
