@@ -21,7 +21,8 @@ from aflowey.functions import (
     impure,
     partial,
     spread,
-    identity, lift,
+    identity,
+    lift,
 )
 
 
@@ -266,7 +267,11 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
         ((a, b, c),) = (
             await aexec()
             .from_flows(
-                [partial(print_a_value, 1), partial(print_a_value, 2), partial(print_a_value, 3)]
+                [
+                    partial(print_a_value, 1),
+                    partial(print_a_value, 2),
+                    partial(print_a_value, 3),
+                ]
             )
             .run()
         )
@@ -314,7 +319,9 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
             flow = (
                 aflow.empty()
                 >> _(x, name="first_step")
-                >> run_flows(partial(pow_, 1), partial(pow_, 2), get_flow, executor=executor)
+                >> run_flows(
+                    partial(pow_, 1), partial(pow_, 2), get_flow, executor=executor
+                )
                 >> flog(print_arg=True)
             )
             ((a, b, c),) = await executor.from_flows(flow).run()
@@ -323,6 +330,7 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
     async def test_lift(self):
         def z(value):
             return value * 2
+
         func = lift(z)
         self.assertEqual(list(func([1, 2, 3])), [2, 4, 6])
 
@@ -335,5 +343,3 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(lifted_zz(1).get_or(0), 1)
 
         self.assertEqual(lifted_zz(0).get_or(10000), 10000)
-
-

@@ -92,7 +92,9 @@ def step(
     *func: Union[F, Function], name: Optional[str] = None, impure: bool = False
 ) -> Union[Function, List[F], F]:
     if len(func) > 1 and impure is False:
-        raise ValueError("Can not have several functions for impure method")  # pragma: no cover
+        raise ValueError(
+            "Can not have several functions for impure method"
+        )  # pragma: no cover
     if impure:
         new_func = side_effect(*func)
         return new_func

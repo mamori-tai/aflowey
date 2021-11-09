@@ -92,7 +92,7 @@ F0 = f0
 
 
 def may_fail(func: Function) -> Function:
-    """ simply for readability"""
+    """simply for readability"""
     return func
 
 
@@ -173,7 +173,7 @@ imp = impure = side_effect
 
 
 def ensure_callable(x: Union[Any, Function]) -> Function:
-    """ ensure a given args is a callable by returning a new callable if not"""
+    """ensure a given args is a callable by returning a new callable if not"""
     if not callable(x):
 
         def wrapped(*args: Any, **kwargs: Any) -> Any:

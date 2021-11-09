@@ -35,7 +35,7 @@ class F:
         return F(wrapped)
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        """ simply call the inner function"""
+        """simply call the inner function"""
         return self.func(*args, **kwargs)
 
     def __repr__(self) -> str:

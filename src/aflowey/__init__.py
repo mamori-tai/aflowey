@@ -23,7 +23,7 @@ from aflowey.functions import (
     identity,
     log,
     flog,
-    lift
+    lift,
 )
 from aflowey.async_flow import (
     AsyncFlow,
@@ -37,7 +37,7 @@ from aflowey.executor import (
     run_flows,
     flows_from_arg,
     spawn_flows,
-    astarmap
+    astarmap,
 )
 
 from aflowey.single_executor import (
@@ -78,5 +78,5 @@ __all__ = [
     "flows_from_arg",
     "spawn_flows",
     "astarmap",
-    "lift"
+    "lift",
 ]

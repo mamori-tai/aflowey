@@ -46,19 +46,23 @@ class AsyncFlowExecutor:
         """if no executor provided, raise an error as the use of the with
         keyword is useless. Creates the context of the current executor"""
         if self.executor is None:
-            raise ValueError("Trying to use with context with not executor provided")  # pragma: no cover
+            raise ValueError(
+                "Trying to use with context with not executor provided"
+            )  # pragma: no cover
         self.executor.__enter__()
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """closing the current executor"""
         if self.executor is None:
-            raise ValueError("Trying to use with context with not executor provided")  # pragma: no cover
+            raise ValueError(
+                "Trying to use with context with not executor provided"
+            )  # pragma: no cover
         self.executor.__exit__(exc_type, exc_val, exc_tb)
 
     @staticmethod
     async def _execute_one_flow(flow: AsyncFlow, executor: Executor) -> Any:
-        """Run """
+        """Run"""
         return await SingleFlowExecutor(flow, executor).execute_flow()
 
     def _execute_or_gather(self, flow: FlowOrListFlow) -> Awaitable[Any]:
