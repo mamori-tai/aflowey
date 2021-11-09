@@ -1,7 +1,7 @@
 import asyncio
 import functools
 import inspect
-from typing import Any, Callable, List, Union, Iterable, Optional, cast
+from typing import Any, Callable, List, Union, Iterable, Optional, cast, Type
 
 from loguru import logger
 
@@ -137,7 +137,7 @@ def spread_kwargs(func: Function) -> F:
 spread_kw = spread_kwargs
 
 
-def lift(f: Function, lift_op: Function = map) -> F:
+def lift(f: Function, lift_op: Union[Type[map[Any]], Function] = map) -> F:
     return p(lift_op, f)
 
 
