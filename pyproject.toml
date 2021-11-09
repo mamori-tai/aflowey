@@ -19,6 +19,7 @@ Changelog = "https://github.com/jerkos/aflowey/releases"
 [tool.poetry.dependencies]
 python = "^3.9"
 loguru = "^0.5.3"
+fn = "^0.4.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

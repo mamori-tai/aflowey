@@ -6,7 +6,7 @@ from loguru import logger
 
 from aflowey import AsyncFlow, F
 from aflowey.functions import is_f0, is_side_effect, get_name
-from aflowey.types import Function, AnyCoroutineFunction, Executor, AnyCallable
+from aflowey.types import Function, AnyCoroutineFunction, Executor
 
 
 async def _exec(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
