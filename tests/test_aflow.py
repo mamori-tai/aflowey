@@ -1,6 +1,7 @@
 import asyncio
 import unittest
 from operator import attrgetter
+from typing import cast, Callable, Any
 
 from loguru import logger
 
@@ -8,7 +9,7 @@ from aflowey import aflow, CANCEL_FLOW, aexec
 from aflowey import async_exec
 from aflowey import flog
 from aflowey.async_flow import step as _
-from aflowey.executor import astarmap, ExecutorType, run_flows
+from aflowey.executor import ExecutorType, run_flows, flows_from_arg
 from aflowey.f import F, FF
 from aflowey.functions import (
     breaker,
@@ -18,9 +19,9 @@ from aflowey.functions import (
     F0,
     F1,
     impure,
-    lift,
+    partial,
     spread,
-    identity,
+    identity, lift,
 )
 
 
@@ -117,7 +118,7 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
 
     async def test_lift(self):
         test = Toto()
-        flow = aflow.from_flow(TestAsyncFlow.simple_flow) >> lift(
+        flow = aflow.from_flow(TestAsyncFlow.simple_flow) >> partial(
             test.return_new_value, x=12
         )
         self.assertEqual(await flow.run(), 2)
@@ -165,25 +166,25 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
             return number + number_
 
         async def toto(a_number, number, number_):
-            return lift(async_toto, number=number, number_=number_)
+            return partial(async_toto, number=number, number_=number_)
 
         async def toto_async(a_number, number, number_):
-            return lift(async_toto, number=number, number_=number_)
+            return partial(async_toto, number=number, number_=number_)
 
         async def tata(a_num):
-            return lift(toto, a_number=a_num, number=1, number_=1)
+            return partial(toto, a_number=a_num, number=1, number_=1)
 
-        func = lift(toto, number=4, number_=4)
+        func = partial(toto, number=4, number_=4)
         flow = aflow.from_flow(TestAsyncFlow.simple_flow) >> func
         result = await flow.run()
         self.assertEqual(result, 8)
 
-        func2 = lift(toto_async, number=4, number_=4)
+        func2 = partial(toto_async, number=4, number_=4)
         flow = aflow.from_flow(TestAsyncFlow.simple_flow) >> func2
         result = await flow.run()
         self.assertEqual(result, 8)
 
-        func3 = lift(tata)
+        func3 = partial(tata)
         flow = aflow.from_flow(TestAsyncFlow.simple_flow) >> func3
         result = await flow.run()
         logger.debug(result)
@@ -265,7 +266,7 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
         ((a, b, c),) = (
             await aexec()
             .from_flows(
-                [lift(print_a_value, 1), lift(print_a_value, 2), lift(print_a_value, 3)]
+                [partial(print_a_value, 1), partial(print_a_value, 2), partial(print_a_value, 3)]
             )
             .run()
         )
@@ -297,7 +298,7 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
         flow = (
             aflow.empty()
             >> _(x, name="first_step")
-            >> astarmap(lift(pow_, 1), lift(pow_, 2), get_flow)
+            >> flows_from_arg(partial(pow_, 1), partial(pow_, 2), get_flow)
             >> flog(print_arg=True)
         )
         self.assertEqual(await flow.run(), [1, 2, 1])
@@ -313,8 +314,26 @@ class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
             flow = (
                 aflow.empty()
                 >> _(x, name="first_step")
-                >> run_flows(lift(pow_, 1), lift(pow_, 2), get_flow, executor=executor)
+                >> run_flows(partial(pow_, 1), partial(pow_, 2), get_flow, executor=executor)
                 >> flog(print_arg=True)
             )
             ((a, b, c),) = await executor.from_flows(flow).run()
             self.assertEqual((a, b, c), (1, 2, 1))
+
+    async def test_lift(self):
+        def z(value):
+            return value * 2
+        func = lift(z)
+        self.assertEqual(list(func([1, 2, 3])), [2, 4, 6])
+
+        def zz(value):
+            return 1 / value
+
+        from fn.monad import Option
+
+        lifted_zz = cast(Callable[[Any], Option], lift(zz, lift_op=Option.from_call))
+        self.assertEqual(lifted_zz(1).get_or(0), 1)
+
+        self.assertEqual(lifted_zz(0).get_or(10000), 10000)
+
+

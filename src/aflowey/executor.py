@@ -46,14 +46,14 @@ class AsyncFlowExecutor:
         """if no executor provided, raise an error as the use of the with
         keyword is useless. Creates the context of the current executor"""
         if self.executor is None:
-            raise ValueError("Trying to use with context with not executor provided")
+            raise ValueError("Trying to use with context with not executor provided")  # pragma: no cover
         self.executor.__enter__()
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """closing the current executor"""
         if self.executor is None:
-            raise ValueError("Trying to use with context with not executor provided")
+            raise ValueError("Trying to use with context with not executor provided")  # pragma: no cover
         self.executor.__exit__(exc_type, exc_val, exc_tb)
 
     @staticmethod
@@ -82,7 +82,7 @@ class AsyncFlowExecutor:
         if isinstance(executor, ExecutorType):
             if executor is ExecutorType.THREAD_POOL:
                 return ThreadPoolExecutor(**kwargs)
-            elif executor.value == ExecutorType.PROCESS_POOL:
+            elif executor is ExecutorType.PROCESS_POOL:
                 return ProcessPoolExecutor(**kwargs)
             raise ValueError("Wrong provided executor type")
         return executor
@@ -122,4 +122,4 @@ class AsyncFlowExecutor:
 
 
 async_exec = aexec = AsyncFlowExecutor
-spawn_flows = run_flows = astarmap = AsyncFlowExecutor.starmap
+flows_from_arg = spawn_flows = run_flows = astarmap = AsyncFlowExecutor.starmap

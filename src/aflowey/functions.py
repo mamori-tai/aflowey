@@ -40,14 +40,14 @@ def log(log_str: str = "", print_arg: bool = False) -> Any:
 flog = log
 
 
-def lift(func: Function, *args: Any, **kwargs: Any) -> F:
+def partial(func: Function, *args: Any, **kwargs: Any) -> F:
     """make a partial function of the given func and ensure
     it will work in an async context
     """
     return F(cast(Callable[[], Any], functools.partial(func, *args, **kwargs)))
 
 
-apartial = partial = lift
+p = apartial = partial
 
 
 def f1(func: Function, extractor: Optional[Function] = None) -> F:
@@ -135,6 +135,10 @@ def spread_kwargs(func: Function) -> F:
 
 
 spread_kw = spread_kwargs
+
+
+def lift(f: Function, lift_op: Function = map) -> F:
+    return p(lift_op, f)
 
 
 def ensure_f(func: Function) -> F:

@@ -15,7 +15,7 @@ from aflowey.functions import (
     F1,
     erratic,
     breaker,
-    lift,
+    partial,
     imp,
     impure,
     apartial,
@@ -23,6 +23,7 @@ from aflowey.functions import (
     identity,
     log,
     flog,
+    lift
 )
 from aflowey.async_flow import (
     AsyncFlow,
@@ -33,6 +34,10 @@ from aflowey.executor import (
     AsyncFlowExecutor,
     async_exec,
     aexec,
+    run_flows,
+    flows_from_arg,
+    spawn_flows,
+    astarmap
 )
 
 from aflowey.single_executor import (
@@ -50,7 +55,7 @@ __all__ = [
     "erratic",
     "breaker",
     "may_fail",
-    "lift",
+    "partial",
     "imp",
     "impure",
     "AsyncFlow",
@@ -69,4 +74,9 @@ __all__ = [
     "CANCEL_FLOW",
     "flog",
     "log",
+    "run_flows",
+    "flows_from_arg",
+    "spawn_flows",
+    "astarmap",
+    "lift"
 ]
