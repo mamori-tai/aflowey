@@ -1,29 +1,34 @@
 import asyncio
 import unittest
 from operator import attrgetter
-from typing import cast, Callable, Any
+from typing import Any
+from typing import Callable
+from typing import cast
 
 from loguru import logger
 
-from aflowey import aflow, CANCEL_FLOW, aexec
+from aflowey import aexec
+from aflowey import aflow
 from aflowey import async_exec
+from aflowey import CANCEL_FLOW
 from aflowey import flog
 from aflowey.async_flow import step as _
-from aflowey.executor import ExecutorType, run_flows, flows_from_arg
-from aflowey.f import F, FF
-from aflowey.functions import (
-    breaker,
-    named,
-    spread_kw,
-    make_impure,
-    F0,
-    F1,
-    impure,
-    partial,
-    spread,
-    identity,
-    lift,
-)
+from aflowey.executor import ExecutorType
+from aflowey.executor import flows_from_arg
+from aflowey.executor import run_flows
+from aflowey.f import F
+from aflowey.f import FF
+from aflowey.functions import breaker
+from aflowey.functions import F0
+from aflowey.functions import F1
+from aflowey.functions import identity
+from aflowey.functions import impure
+from aflowey.functions import lift
+from aflowey.functions import make_impure
+from aflowey.functions import named
+from aflowey.functions import partial
+from aflowey.functions import spread
+from aflowey.functions import spread_kw
 
 
 def x():

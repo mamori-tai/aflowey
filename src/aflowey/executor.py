@@ -1,11 +1,20 @@
 import asyncio
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-from enum import Enum, auto
-from typing import List, Any, Awaitable, Union, cast, Optional
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
+from enum import auto
+from enum import Enum
+from typing import Any
+from typing import Awaitable
+from typing import cast
+from typing import List
+from typing import Optional
+from typing import Union
 
-from aflowey import AsyncFlow, aflow
+from aflowey import aflow
+from aflowey import AsyncFlow
 from aflowey.single_executor import SingleFlowExecutor
-from aflowey.types import AnyCallable, Executor
+from aflowey.types import AnyCallable
+from aflowey.types import Executor
 
 FlowOrListFlow = Union[List[AsyncFlow], AsyncFlow]
 

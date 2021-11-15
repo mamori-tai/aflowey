@@ -1,5 +1,11 @@
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-from typing import Any, TypeVar, Callable, Optional, Union, Coroutine
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any
+from typing import Callable
+from typing import Coroutine
+from typing import Optional
+from typing import TypeVar
+from typing import Union
 
 
 Opt = Optional

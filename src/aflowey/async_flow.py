@@ -1,9 +1,17 @@
 from copy import copy
-from typing import Any, Union, List, Dict, Optional
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Union
 
-from aflowey import ensure_callable, F
-from aflowey.functions import side_effect, named, ensure_f
-from aflowey.types import Function, Executor
+from aflowey import ensure_callable
+from aflowey import F
+from aflowey.functions import ensure_f
+from aflowey.functions import named
+from aflowey.functions import side_effect
+from aflowey.types import Executor
+from aflowey.types import Function
 
 
 class AsyncFlow:

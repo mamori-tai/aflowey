@@ -1,12 +1,19 @@
 import asyncio
 import functools
-from typing import Any, Union, Awaitable
+from typing import Any
+from typing import Awaitable
+from typing import Union
 
 from loguru import logger
 
-from aflowey import AsyncFlow, F
-from aflowey.functions import is_f0, is_side_effect, get_name
-from aflowey.types import Function, AnyCoroutineFunction, Executor
+from aflowey import AsyncFlow
+from aflowey import F
+from aflowey.functions import get_name
+from aflowey.functions import is_f0
+from aflowey.functions import is_side_effect
+from aflowey.types import AnyCoroutineFunction
+from aflowey.types import Executor
+from aflowey.types import Function
 
 
 async def _exec(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
