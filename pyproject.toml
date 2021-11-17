@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aflowey"
-version = "0.0.20"
+version = "0.0.21"
 description = "Async flow made easy and fun"
 authors = ["Marc Dubois <cram@hotmail.fr>"]
 license = "MIT"
@@ -10,7 +10,11 @@ repository = "https://github.com/jerkos/aflowey"
 documentation = "https://aflowey.readthedocs.io"
 classifiers = [
     "Development Status :: 4 - Beta",
+    "Topic :: Software Development :: Libraries :: Python Modules",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.6",
 ]
 
 [tool.poetry.urls]
