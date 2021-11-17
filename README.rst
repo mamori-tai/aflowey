@@ -48,7 +48,7 @@ https://aflowey.readthedocs.io
 Requirements
 ------------
 
-* python 3.9 +
+* python 3.6 +
 
 This library is easier to use with third party libraries for manipulating function
 such as fn_ (flip function, function composition...), and tenacity_ (retry library).
@@ -144,7 +144,7 @@ Execute several flows asynchronously:
         url_flows = [get_url_flow(url) for url in urls]
 
         # execute all flow with asyncio gather method
-        executor = aexec(url_flows) | user_flow | organization_flow
+        executor = aexec().from_flows(url_flows) | user_flow | organization_flow
         (url1, url2, url3, url4), user, organization = await executor.run()
 
 It can be boring to create function that exactly matches arity of the flow.
