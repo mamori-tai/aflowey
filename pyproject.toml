@@ -20,6 +20,7 @@ Changelog = "https://github.com/jerkos/aflowey/releases"
 python = "^3.6"
 loguru = "^0.5.3"
 fn = "^0.4.3"
+aiounittest = "^1.4.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
@@ -45,7 +46,6 @@ sphinx-rtd-theme = "^1.0.0"
 Pygments = "^2.9.0"
 nox = "^2021.10.1"
 nox-poetry = "^0.8.6"
-aiounittest = "^1.4.1"
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
