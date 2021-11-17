@@ -33,7 +33,7 @@ class AsyncFlowExecutor:
     """
 
     def __init__(
-        self, /, executor: Union[Executor, Optional[ExecutorType]] = None, **kwargs: Any
+        self, executor: Union[Executor, Optional[ExecutorType]] = None, **kwargs: Any
     ) -> None:
         """
         Creates a new async flow executor
