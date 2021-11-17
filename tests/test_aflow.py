@@ -1,5 +1,8 @@
 import asyncio
-import unittest
+try:
+    from unittest import IsolatedAsyncioTestCase
+except ImportError:
+    from aiounittest import AsyncTestCase as IsolatedAsyncioTestCase
 from operator import attrgetter
 from typing import Any
 from typing import Callable
@@ -66,7 +69,7 @@ def spread_function(x):
     return x, x + 1
 
 
-class TestAsyncFlow(unittest.IsolatedAsyncioTestCase):
+class TestAsyncFlow(IsolatedAsyncioTestCase):
     simple_flow = aflow.empty() >> x
     impure_flow = aflow.from_flow(simple_flow) >> impure(
         F0(print_some_stuff), F0(print_some_stuff)
