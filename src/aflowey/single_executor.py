@@ -49,7 +49,7 @@ def check_and_run_step(
 ) -> Awaitable[Any]:
     if fn.is_coroutine_function:
         new_fn = async_wrap(fn)
-        return asyncio.get_running_loop().create_task(new_fn(*args, **kwargs))  # type: ignore[call-arg]
+        return asyncio.get_event_loop().create_task(new_fn(*args, **kwargs))  # type: ignore[call-arg]
     if executor is None:
         new_fn = async_wrap(fn)
         return new_fn(*args, **kwargs)  # type: ignore[call-arg]
