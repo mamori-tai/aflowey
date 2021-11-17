@@ -5,8 +5,8 @@ from typing import List
 from typing import Optional
 from typing import Union
 
-from aflowey import ensure_callable
-from aflowey import F
+from aflowey.functions import ensure_callable
+from aflowey.f import F
 from aflowey.functions import ensure_f
 from aflowey.functions import named
 from aflowey.functions import side_effect

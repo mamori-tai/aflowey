@@ -6,8 +6,8 @@ from typing import Union
 
 from loguru import logger
 
-from aflowey import AsyncFlow
-from aflowey import F
+from aflowey.async_flow import AsyncFlow
+from aflowey.f import F
 from aflowey.functions import get_name
 from aflowey.functions import is_f0
 from aflowey.functions import is_side_effect

@@ -11,7 +11,7 @@ from typing import Union
 
 from loguru import logger
 
-from aflowey import F
+from aflowey.f import F
 from aflowey.types import Function
 
 
