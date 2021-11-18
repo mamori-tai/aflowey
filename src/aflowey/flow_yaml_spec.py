@@ -1,7 +1,6 @@
 from typing import Callable, Any, Mapping, Awaitable, Optional
 
 from fn.iters import first
-from loguru import logger
 from yaml import safe_load
 
 from aflowey import impure, spread, F0, F1, spread_kw, partial
@@ -16,8 +15,8 @@ class YamlFlow:
     >>>    YamlFlow()
     >>>     .register(flow)
     >>>     .register(flow2)
-    >>>     .validate()
     >>> )
+    >>> yaml_flow.validate(yaml_file)
     >>> await yaml_flow.run()
     """
 
@@ -140,12 +139,10 @@ class YamlFlow:
         flow = aflow.empty()
         for step in self.steps:
             computed_func = self._transform_func(step[self.STEP])
-            logger.debug(computed_func)
             flow >> computed_func
         yaml_flow = self.yaml_dict["flow"]
         executor_step = first(element for element in yaml_flow if self.EXECUTOR in element)
         if executor_step:
-            logger.debug("hello")
             with aexec(self._get_executor_type(executor_step[self.EXECUTOR])) as executor:
                 return await executor.from_flows(flow).run()
         return flow.run()
