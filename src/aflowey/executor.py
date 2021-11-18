@@ -1,17 +1,17 @@
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures import ThreadPoolExecutor
-from enum import auto
 from enum import Enum
+from enum import auto
 from typing import Any
 from typing import Awaitable
-from typing import cast
 from typing import List
 from typing import Optional
 from typing import Union
+from typing import cast
 
-from aflowey import aflow
 from aflowey import AsyncFlow
+from aflowey import aflow
 from aflowey.single_executor import SingleFlowExecutor
 from aflowey.types import AnyCallable
 from aflowey.types import Executor

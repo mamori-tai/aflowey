@@ -1,4 +1,9 @@
 import asyncio
+
+import yaml
+
+from aflowey.flow_yaml_spec import YamlFlow
+
 try:
     from unittest import IsolatedAsyncioTestCase
 except ImportError:
@@ -351,3 +356,100 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         self.assertEqual(lifted_zz(1).get_or(0), 1)
 
         self.assertEqual(lifted_zz(0).get_or(10000), 10000)
+
+    async def test_yaml(self):
+        """
+        flow = (
+            aflow.empty()
+            >> _(x, name="first step")
+            >> _(identity, name="second step")
+            >> _(print_stuff, name="impure", impure=True)
+            >> _(lambda v: (v + 1, v + 2), name="add_one")
+            >> _(spread(lambda v, z: (z ** 2, v ** 2)), name="pow2")
+        )
+        """
+        print_stuff = FF >> print_some_stuff >> F0
+        yaml_file = """
+        flow:
+            - executor: thread
+            - step: 
+                function: x
+            - step: 
+                function: identity
+            - step: 
+                function: print_some_stuff
+                impure: true
+            - step:
+                function:
+                    eval: "lambda v: (v + 1, v + 2)"
+            - step:
+                function:
+                    eval: "lambda v, z: (z**2, v**2)"
+                functor: spread
+        """
+        yaml_flow = (
+            YamlFlow()
+            .register(x)
+            .register(identity)
+            .register(print_stuff, name="print_some_stuff")
+        )
+        yaml_flow.validate(yaml_file)
+        result = await yaml_flow.run()
+        self.assertEqual(result, [(9, 4)])
+
+    async def test_yaml_flow_more_complicated(self):
+        def pow_(z, y):
+            return z ** y
+
+        def get_flow(y):
+            return aflow.from_args(y) >> identity
+        yaml_file = """
+        flow:
+            - executor: thread
+            - step:
+                function: x
+            - step:
+                parallel-flows:
+                    - flow:
+                        function: pow_
+                        functor: partial
+                        args:
+                            - 1
+                    - flow:
+                        function: pow_
+                        functor: partial
+                        args:
+                            - 2
+                    - flow:
+                        function: get_flow
+            - step:
+                function: log
+                kwargs:
+                    print_arg : true
+                call: true
+        
+        """
+        logger.debug(yaml.safe_load(yaml_file))
+        logger.debug(flog.__name__)
+        yaml_flow = (
+            YamlFlow()
+            .register(x)
+            .register(pow_)
+            .register(get_flow)
+            .register(flog, name="log")
+        )
+        yaml_flow.validate(yaml_file)
+        result = await yaml_flow.run()
+        logger.debug(result)
+        #with aexec(ExecutorType.THREAD_POOL) as executor:
+        #    flow = (
+        #        aflow.empty()
+        #       >> _(x, name="first_step")
+        #        >> run_flows(
+        #            partial(pow_, 1), partial(pow_, 2), get_flow, executor=executor
+        #        )
+        #        >> flog(print_arg=True)
+        #    )
+        #    ((a, b, c),) = await executor.from_flows(flow).run()
+        #self.assertEqual((a, b, c), (1, 2, 1))
+

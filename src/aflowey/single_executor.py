@@ -129,8 +129,10 @@ class SingleFlowExecutor:
         current_args = await self._execute_first_step(first_aws)
 
         for index, task in enumerate(self.flow.aws[1:]):
-
+            logger.debug(task)
+            logger.debug(current_args)
             result = await check_and_run_step(self.executor, task, current_args)
+            logger.debug(result)
 
             if is_side_effect(task):
                 # side effect task, does not return a value
