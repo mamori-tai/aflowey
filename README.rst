@@ -72,7 +72,7 @@ Chain function to execute an async flow !
 
 .. code:: python
 
-    from aflowey import aflow, CANCEL_FLOW, aexec, flog, lift
+    from aflowey import aflow, CANCEL_FLOW, aexec, flog, partial
 
     db = ... # get client db
 
@@ -119,18 +119,18 @@ Execute several flows asynchronously:
 
         user_flow = (
             aflow.empty()
-            >> lift(db.find_one, search={"username": name})
+            >> partial(db.find_one, search={"username": name})
             >> User.from_dict
             # the impure indicate that this step does not return a new result
             # i.e the result of User.from_dict will be sended
-            >> impure(lift(flip(setattr), datetime.now(), 'created_at'))
+            >> impure(partial(flip(setattr), datetime.now(), 'created_at'))
         )
 
         organization_id = "Not employed"
 
         organization_flow = (
             aflow.empty()
-            >> lift(db_find_one, search={"organization_id": organization_id})
+            >> partial(db_find_one, search={"organization_id": organization_id})
             >> Organization.from_dict
         )
 
@@ -150,7 +150,7 @@ Execute several flows asynchronously:
 It can be boring to create function that exactly matches arity of the flow.
 Aflowey provide some higher order functions to help, see:
 
-* lift: use partial to create new method
+* lift: create a new method accepting transformed arguments
 * F0: from a 0 argument function, create one argument function to fit the arity of the flow
 * F1: create a new function with an extra parameter to process input of the flow step
 * spread: create a new function which spread an iterable of arguments into the given function
@@ -159,6 +159,7 @@ Aflowey provide some higher order functions to help, see:
 The fn library provide other interesting functions like:
 
 * flip
+* first
 
 If you have any other ideas...
 
