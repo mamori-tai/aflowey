@@ -1,4 +1,7 @@
 import asyncio
+
+from aflowey.context import ctx_var, Context
+
 try:
     from unittest import IsolatedAsyncioTestCase
 except ImportError:
@@ -75,6 +78,10 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         F0(print_some_stuff), F0(print_some_stuff)
     )
 
+    async def asyncSetup(self):
+        import aiotask_context as ctx
+        asyncio.get_event_loop().set_task_factory(ctx.task_factory)
+
     async def test_flow_init(self):
         result = await TestAsyncFlow.impure_flow.run()
         self.assertEqual(result, 1)
@@ -88,7 +95,6 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         self.assertEqual(r2, 1)
 
     async def test_flow_exec_parallel_multiple(self):
-
         (r0, r1), r2 = await (
             async_exec().from_flows(
                 [TestAsyncFlow.simple_flow, TestAsyncFlow.simple_flow]
@@ -323,15 +329,14 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         def get_flow(y):
             return aflow.from_args(y) >> identity
 
+        flow = (
+            aflow.empty()
+            >> _(x, name="first_step")
+            >> run_flows(partial(pow_, 1), partial(pow_, 2), get_flow)
+            >> flog(print_arg=True)
+        )
+
         with aexec(ExecutorType.THREAD_POOL) as executor:
-            flow = (
-                aflow.empty()
-                >> _(x, name="first_step")
-                >> run_flows(
-                    partial(pow_, 1), partial(pow_, 2), get_flow, executor=executor
-                )
-                >> flog(print_arg=True)
-            )
             ((a, b, c),) = await executor.from_flows(flow).run()
             self.assertEqual((a, b, c), (1, 2, 1))
 
@@ -351,3 +356,37 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         self.assertEqual(lifted_zz(1).get_or(0), 1)
 
         self.assertEqual(lifted_zz(0).get_or(10000), 10000)
+
+    async def test_context(self):
+
+        ctx = dict(name="Marco")
+
+        async def z():
+            await asyncio.sleep(0.1)
+            value = ctx["name"]
+            ctx["name"] = value.upper()
+
+        async def zz():
+            await asyncio.sleep(0.1)
+            return ctx.get("name") + "_checked"
+
+        flow = aflow.empty() >> z >> (FF >> zz >> F0)
+        logger.debug(await flow.run())
+
+    async def test_context(self):
+
+        async def z():
+            await asyncio.sleep(0.1)
+            await Context.set("name", Context.get("name").upper())
+
+        async def zz():
+            await asyncio.sleep(0.1)
+            return Context.get("name") + "_checked"
+
+        flow = aflow.empty() >> z >> (FF >> zz >> F0)
+        with aexec(ExecutorType.THREAD_POOL, context={"name": "Marc"}) as execution:
+            logger.debug(await execution.from_flows(flow).run())
+        logger.debug(ctx_var.get())
+
+    async def test_context_clean(self):
+        logger.debug(ctx_var.get())

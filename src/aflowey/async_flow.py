@@ -63,7 +63,7 @@ class AsyncFlow:
         new_flow.aws = aws
         return new_flow
 
-    async def run(self, executor: Executor = None) -> Any:
+    async def run(self) -> Any:
         """run the flow
 
         Returns:
@@ -71,7 +71,7 @@ class AsyncFlow:
         """
         from aflowey.single_executor import SingleFlowExecutor
 
-        return await SingleFlowExecutor(self, executor).execute_flow()
+        return await SingleFlowExecutor(self).execute_flow()
 
     @staticmethod
     def from_args(*args: Any, **kwargs: Any) -> "AsyncFlow":

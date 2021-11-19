@@ -7,12 +7,12 @@ from typing import Union
 from loguru import logger
 
 from aflowey.async_flow import AsyncFlow
+from aflowey.context import executor_var
 from aflowey.f import F
 from aflowey.functions import get_name
 from aflowey.functions import is_f0
 from aflowey.functions import is_side_effect
 from aflowey.types import AnyCoroutineFunction
-from aflowey.types import Executor
 from aflowey.types import Function
 
 
@@ -44,20 +44,23 @@ def async_wrap(func: F) -> AnyCoroutineFunction:
     return wrapped
 
 
-def check_and_run_step(
-    executor: Executor, fn: F, *args: Any, **kwargs: Any
-) -> Awaitable[Any]:
+def check_and_run_step(fn: F, *args: Any, **kwargs: Any) -> Awaitable[Any]:
+    loop = asyncio.get_event_loop()
+
     if fn.is_coroutine_function:
         new_fn = async_wrap(fn)
-        # make it 3.6 compatible
-        return asyncio.get_event_loop().create_task(new_fn(*args, **kwargs))  # type: ignore[call-arg]
+        return loop.create_task(new_fn(*args, **kwargs))  # type: ignore[call-arg]
+
+    executor = executor_var.get()
+
     if executor is None:
         new_fn = async_wrap(fn)
         return new_fn(*args, **kwargs)  # type: ignore[call-arg]
-    loop = asyncio.get_event_loop()
+
     new_fn = fn.func
     if kwargs:
         new_fn = functools.partial(new_fn, **kwargs)
+
     return loop.run_in_executor(executor, _exec_synchronously, new_fn, *args)
 
 
@@ -66,17 +69,16 @@ class SingleFlowExecutor:
 
     CANCEL_FLOW = object()
 
-    def __init__(self, flow: AsyncFlow, executor: Executor = None) -> None:
+    def __init__(self, flow: AsyncFlow) -> None:
         self.flow = flow
-        self.executor = executor
 
     @staticmethod
     async def check_and_execute_flow_if_needed(
-        maybe_flow: Union[Any, AsyncFlow], executor: Executor
+        maybe_flow: Union[Any, AsyncFlow]
     ) -> Any:
         """check if we have an async flow and execute it"""
         if isinstance(maybe_flow, AsyncFlow):
-            return await SingleFlowExecutor(maybe_flow, executor).execute_flow()
+            return await SingleFlowExecutor(maybe_flow).execute_flow()
         return maybe_flow
 
     @staticmethod
@@ -94,7 +96,12 @@ class SingleFlowExecutor:
 
     def save_step(self, task: F, index: int, current_args: Any) -> None:
         """save step state in flow attribute"""
-        self.flow.steps[self.get_step_name(task, index)] = current_args
+        step_name = self.get_step_name(task, index)
+        self.flow.steps[step_name] = current_args
+
+        # update context
+        # ctx = {**ctx_var.get(), step_name: current_args}
+        # ctx_var.set(ctx)
 
     def _check_current_args_if_side_effect(self, first_aws: F, res: Any) -> Any:
         if is_side_effect(first_aws):
@@ -106,14 +113,10 @@ class SingleFlowExecutor:
         if not self.flow.args and not self.flow.kwargs and is_f0(first_aws):
             self.flow.args = (None,)
 
-        res = await check_and_run_step(
-            self.executor, first_aws, *self.flow.args, **self.flow.kwargs
-        )
+        res = await check_and_run_step(first_aws, *self.flow.args, **self.flow.kwargs)
         current_args = self._check_current_args_if_side_effect(first_aws, res)
         # if flow run it
-        current_args = await self.check_and_execute_flow_if_needed(
-            current_args, self.executor
-        )
+        current_args = await self.check_and_execute_flow_if_needed(current_args)
 
         # memorize name
         self.save_step(first_aws, 0, current_args)
@@ -130,7 +133,7 @@ class SingleFlowExecutor:
 
         for index, task in enumerate(self.flow.aws[1:]):
 
-            result = await check_and_run_step(self.executor, task, current_args)
+            result = await check_and_run_step(task, current_args)
 
             if is_side_effect(task):
                 # side effect task, does not return a value
@@ -139,7 +142,7 @@ class SingleFlowExecutor:
                     break  # pragma: no cover
                 continue  # pragma: no cover
 
-            result = await self.check_and_execute_flow_if_needed(result, self.executor)
+            result = await self.check_and_execute_flow_if_needed(result)
             if self.need_to_cancel_flow(result):  # check if we need to cancel the flow
                 break
 
