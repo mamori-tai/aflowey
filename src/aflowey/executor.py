@@ -1,7 +1,6 @@
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures import ThreadPoolExecutor
-from contextvars import copy_context
 from enum import Enum
 from enum import auto
 from typing import Any
@@ -35,7 +34,7 @@ class AsyncFlowExecutor:
     """
 
     def __init__(
-            self, executor: Union[Executor, Optional[ExecutorType]] = None, **kwargs: Any
+        self, executor: Union[Executor, Optional[ExecutorType]] = None, **kwargs: Any
     ) -> None:
         """
         Creates a new async flow executor
@@ -44,9 +43,8 @@ class AsyncFlowExecutor:
             ProcessPoolExecutor
             kwargs: all passed to create the executor
         """
-        copy_context()
         if "context" in kwargs:
-            self._context = Context(**kwargs['context'])
+            self._context = Context(**kwargs["context"])
             ctx_var.set(self._context)
 
         # do not override it
@@ -107,14 +105,14 @@ class AsyncFlowExecutor:
 
     @staticmethod
     def _init_executor_if_needed(
-            executor: Optional[Union[Executor, ExecutorType]], **kwargs: Any
+        executor: Optional[Union[Executor, ExecutorType]], **kwargs: Any
     ) -> Optional[Executor]:
         if executor is None:
             return None
         if isinstance(executor, ExecutorType):
             if executor is ExecutorType.THREAD_POOL:
                 kw = {**kwargs}
-                if 'context' in kw:
+                if "context" in kw:
                     del kw["context"]
                 return ThreadPoolExecutor(**kw)
             elif executor is ExecutorType.PROCESS_POOL:

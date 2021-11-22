@@ -78,10 +78,6 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         F0(print_some_stuff), F0(print_some_stuff)
     )
 
-    async def asyncSetup(self):
-        import aiotask_context as ctx
-        asyncio.get_event_loop().set_task_factory(ctx.task_factory)
-
     async def test_flow_init(self):
         result = await TestAsyncFlow.impure_flow.run()
         self.assertEqual(result, 1)
@@ -374,19 +370,29 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         logger.debug(await flow.run())
 
     async def test_context(self):
-
-        async def z():
+        async def a():
             await asyncio.sleep(0.1)
-            await Context.set("name", Context.get("name").upper())
+            logger.debug(Context.get_and_set("toto", lambda z: z.upper()))
 
-        async def zz():
+        def aa():
+            logger.debug(Context.get_and_set("toto", lambda z: z + "_checked"))
+
+        def aaa():
+            logger.debug(Context.get_and_set("toto", lambda z: z + "_unbelievable"))
+
+        async def aaaa():
             await asyncio.sleep(0.1)
-            return Context.get("name") + "_checked"
+            logger.debug(Context.get("toto"))
 
-        flow = aflow.empty() >> z >> (FF >> zz >> F0)
-        with aexec(ExecutorType.THREAD_POOL, context={"name": "Marc"}) as execution:
+        flow = (
+            aflow.empty()
+            >> a
+            >> (FF >> aa >> F0)
+            >> (FF >> aaa >> F0)
+            >> (FF >> aaaa >> F0)
+        )
+        with aexec(ExecutorType.THREAD_POOL, context={"toto": "Mathieu"}) as execution:
             logger.debug(await execution.from_flows(flow).run())
-        logger.debug(ctx_var.get())
 
     async def test_context_clean(self):
         logger.debug(ctx_var.get())

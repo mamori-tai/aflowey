@@ -1,5 +1,6 @@
 import asyncio
 import functools
+from contextvars import copy_context
 from typing import Any
 from typing import Awaitable
 from typing import Union
@@ -26,10 +27,13 @@ async def _exec(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
 
 
 def _exec_synchronously(fn: Function, *args: Any) -> Any:
-    result = fn(*args)
-    while callable(result):
-        result = result()
-    return result
+    def _run():
+        result = fn(*args)
+        while callable(result):
+            result = result()
+        return result
+
+    return _run
 
 
 def async_wrap(func: F) -> AnyCoroutineFunction:
@@ -60,8 +64,12 @@ def check_and_run_step(fn: F, *args: Any, **kwargs: Any) -> Awaitable[Any]:
     new_fn = fn.func
     if kwargs:
         new_fn = functools.partial(new_fn, **kwargs)
+    context = copy_context()
 
-    return loop.run_in_executor(executor, _exec_synchronously, new_fn, *args)
+    logger.debug(f'running "{new_fn}" in a thread pool executor')
+    return loop.run_in_executor(
+        executor, context.run, _exec_synchronously(new_fn, *args)
+    )
 
 
 class SingleFlowExecutor:
