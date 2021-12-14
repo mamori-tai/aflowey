@@ -107,10 +107,6 @@ class SingleFlowExecutor:
         step_name = self.get_step_name(task, index)
         self.flow.steps[step_name] = current_args
 
-        # update context
-        # ctx = {**ctx_var.get(), step_name: current_args}
-        # ctx_var.set(ctx)
-
     def _check_current_args_if_side_effect(self, first_aws: F, res: Any) -> Any:
         if is_side_effect(first_aws):
             return self.flow.kwargs if self.flow.kwargs else self.flow.args

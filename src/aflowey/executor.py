@@ -1,90 +1,36 @@
 import asyncio
-from concurrent.futures import ProcessPoolExecutor
-from concurrent.futures import ThreadPoolExecutor
-from enum import Enum
-from enum import auto
 from typing import Any
 from typing import Awaitable
 from typing import List
-from typing import Optional
 from typing import Union
 from typing import cast
 
 from aflowey import AsyncFlow
 from aflowey import aflow
-from aflowey.context import executor_var, ctx_var, Context
+from aflowey.runner import AsyncRunner, ExecutorType
 from aflowey.single_executor import SingleFlowExecutor
 from aflowey.types import AnyCallable
-from aflowey.types import Executor
 
 FlowOrListFlow = Union[List[AsyncFlow], AsyncFlow]
-
-
-class ExecutorType(Enum):
-    THREAD_POOL = auto()
-    PROCESS_POOL = auto()
 
 
 class AsyncFlowExecutor:
     """
     Execute several flows concurrently
 
-    >>>await (aexec().from_flows(flows) | flow).run()
+    >>> await (aexec().from_flows(flows) | flow).run()
 
     """
 
-    def __init__(
-        self, executor: Union[Executor, Optional[ExecutorType]] = None, **kwargs: Any
-    ) -> None:
+    def __init__(self) -> None:
         """
         Creates a new async flow executor
-        Args:
-            executor: the executor to process synchronous code, could be a ThreadPoolExecutor
-            ProcessPoolExecutor
-            kwargs: all passed to create the executor
         """
-        if "context" in kwargs:
-            self._context = Context(**kwargs["context"])
-            ctx_var.set(self._context)
-
-        # do not override it
-        if executor_var.get() is None:
-            executor_var.set(
-                AsyncFlowExecutor._init_executor_if_needed(executor, **kwargs)
-            )
-
         self.flows: List[Union[AsyncFlow, List[AsyncFlow]]] = []
-
-    @property
-    def executor(self):
-        return executor_var.get()
 
     def __or__(self, flow: List[AsyncFlow]) -> "AsyncFlowExecutor":
         """add a flow to execute in parallel"""
-        self.flows.append(flow)
-
-        return self
-
-    def __enter__(self) -> "AsyncFlowExecutor":
-        """if no executor provided, raise an error as the use of the with
-        keyword is useless. Creates the context of the current executor"""
-        if self.executor is None:
-            raise ValueError(
-                "Trying to use with context with not executor provided"
-            )  # pragma: no cover
-        self.executor.__enter__()
-        return self
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        """closing the current executor"""
-
-        if self.executor is None:
-            raise ValueError(
-                "Trying to use with context with not executor provided"
-            )  # pragma: no cover
-        self.executor.__exit__(exc_type, exc_val, exc_tb)
-        ctx_var.set(None)
-        executor_var.set(None)
+        return self.from_flows(flow)
 
     @staticmethod
     async def _execute_one_flow(flow: AsyncFlow) -> Any:
@@ -103,22 +49,11 @@ class AsyncFlowExecutor:
         flows = [self._execute_or_gather(flow) for flow in self.flows]
         return asyncio.gather(*flows, **kwargs)
 
-    @staticmethod
-    def _init_executor_if_needed(
-        executor: Optional[Union[Executor, ExecutorType]], **kwargs: Any
-    ) -> Optional[Executor]:
-        if executor is None:
-            return None
-        if isinstance(executor, ExecutorType):
-            if executor is ExecutorType.THREAD_POOL:
-                kw = {**kwargs}
-                if "context" in kw:
-                    del kw["context"]
-                return ThreadPoolExecutor(**kw)
-            elif executor is ExecutorType.PROCESS_POOL:
-                return ProcessPoolExecutor(**kwargs)
-            raise ValueError("Wrong provided executor type")
-        return executor
+    def thread_runner(self, **kwargs):
+        return AsyncRunner(self.run, ExecutorType.THREAD_POOL, **kwargs)
+
+    def process_runner(self, **kwargs):
+        return AsyncRunner(self.run, ExecutorType.PROCESS_POOL, **kwargs)
 
     @staticmethod
     def ensure_flow(fn: Any, arg: Any = None) -> AsyncFlow:
@@ -139,12 +74,10 @@ class AsyncFlowExecutor:
 
     @staticmethod
     def starmap(*flows: Any) -> AnyCallable:
-        executor = executor_var.get()
-
         async def wrapper(arg: Any) -> Any:
             new_flows = [AsyncFlowExecutor.ensure_flow(fn, arg) for fn in flows]
             result = (
-                await AsyncFlowExecutor(executor=executor).from_flows(new_flows).run()
+                await AsyncFlowExecutor().from_flows(new_flows).run()
             )
             return result[0]
 

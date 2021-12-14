@@ -332,8 +332,8 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
             >> flog(print_arg=True)
         )
 
-        with aexec(ExecutorType.THREAD_POOL) as executor:
-            ((a, b, c),) = await executor.from_flows(flow).run()
+        with (aexec() | flow).thread_runner() as runner:
+            ((a, b, c),) = await runner.run()
             self.assertEqual((a, b, c), (1, 2, 1))
 
     async def test_lift(self):
@@ -391,8 +391,12 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
             >> (FF >> aaa >> F0)
             >> (FF >> aaaa >> F0)
         )
-        with aexec(ExecutorType.THREAD_POOL, context={"toto": "Mathieu"}) as execution:
-            logger.debug(await execution.from_flows(flow).run())
+        async_exec = aexec() | flow
+        with async_exec.thread_runner() as runner:
+            logger.debug(await runner.run(context={"toto": "Mathieu"}))
 
-    async def test_context_clean(self):
-        logger.debug(ctx_var.get())
+    async def test_test_test(self):
+        test = aexec() | self.simple_flow | self.impure_flow
+        with test.thread_runner() as runner:
+            self.assertEqual(await runner.run(), [1, 1])
+        self.assertEqual(ctx_var.get(), None)
