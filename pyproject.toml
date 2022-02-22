@@ -22,7 +22,7 @@ classifiers = [
 Changelog = "https://github.com/mamori-tai/aflowey/releases"
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.6.2"
 loguru = "^0.5.3"
 "fn.py" = {git = "https://github.com/artemisart/fn.py", rev = "c45fdc85cf734356c42e9afcf40bce2143059d19"}
 aiounittest = "^1.4.1"
