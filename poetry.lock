@@ -362,19 +362,12 @@ pygments = "*"
 restructuredtext-lint = "*"
 
 [[package]]
-name = "fn.py"
+name = "fnmamoritai.py"
 version = "0.5.2"
 description = "Implementation of missing features to enjoy functional programming in Python"
 category = "main"
 optional = false
 python-versions = "*"
-develop = false
-
-[package.source]
-type = "git"
-url = "https://github.com/artemisart/fn.py"
-reference = "c45fdc85cf734356c42e9afcf40bce2143059d19"
-resolved_reference = "c45fdc85cf734356c42e9afcf40bce2143059d19"
 
 [[package]]
 name = "gitdb"
@@ -1188,7 +1181,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2"
-content-hash = "05a5f8211729e212affd52b06d539f17beed56650cf9bfad48c77e7bf211d125"
+content-hash = "2e446fa78c42574e577911c81023f3103ac50e22893932758116d5642639b9f7"
 
 [metadata.files]
 aiocontextvars = [
@@ -1358,7 +1351,9 @@ flake8-rst-docstrings = [
     {file = "flake8-rst-docstrings-0.2.5.tar.gz", hash = "sha256:4fe93f997dea45d9d3c8bd220f12f0b6c359948fb943b5b48021a3f927edd816"},
     {file = "flake8_rst_docstrings-0.2.5-py3-none-any.whl", hash = "sha256:b99d9041b769b857efe45a448dc8c71b1bb311f9cacbdac5de82f96498105082"},
 ]
-"fn.py" = []
+"fnmamoritai.py" = [
+    {file = "fnmamoritai.py-0.5.2-py3-none-any.whl", hash = "sha256:9f54bb5aa851e4072b4e3b4a97decfda13767063c59f3eb5c2a45b0c7197a883"},
+]
 gitdb = [
     {file = "gitdb-4.0.9-py3-none-any.whl", hash = "sha256:8033ad4e853066ba6ca92050b9df2f89301b8fc8bf7e9324d412a63f8bf1a8fd"},
     {file = "gitdb-4.0.9.tar.gz", hash = "sha256:bac2fd45c0a1c9cf619e63a90d62bdc63892ef92387424b855792a6cabe789aa"},
