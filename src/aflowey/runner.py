@@ -43,6 +43,7 @@ class AsyncRunner:
         self._executor = init_executor_if_needed(executor, **kwargs)
 
         self._ctx = None
+        self._token = None
 
     def __enter__(self) -> "AsyncRunner":
         """if no executor provided, raise an error as the use of the with
@@ -62,7 +63,6 @@ class AsyncRunner:
                 "Trying to use with context with not executor provided"
             )  # pragma: no cover
         self._executor.__exit__(exc_type, exc_val, exc_tb)
-        ctx_var.set(None)
 
     async def run(self, context: Opt[Union[Context, Mapping]] = None, **kwargs):
         """all kwargs stuff will be passed to the executor
@@ -74,7 +74,12 @@ class AsyncRunner:
         _ctx = context or {}
         _ctx = _ctx if isinstance(_ctx, Context) else Context(**_ctx)
 
-        ctx_var.set(_ctx)
+        self._token = ctx_var.set(_ctx)
         executor_var.set(self._executor)
         # run the function
-        return await self.func(**kwargs)
+        result = await self.func(**kwargs)
+
+        # reset to avoid memory leak
+        ctx_var.reset(self._token)
+
+        return result
