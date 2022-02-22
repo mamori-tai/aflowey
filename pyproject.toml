@@ -19,7 +19,7 @@ classifiers = [
 ]
 
 [tool.poetry.urls]
-Changelog = "https://github.com/jerkos/aflowey/releases"
+Changelog = "https://github.com/mamori-tai/aflowey/releases"
 
 [tool.poetry.dependencies]
 python = "^3.6"
