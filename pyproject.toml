@@ -5,8 +5,8 @@ description = "Async flow made easy and fun"
 authors = ["Marc Dubois <cram@hotmail.fr>"]
 license = "MIT"
 readme = "README.rst"
-homepage = "https://github.com/jerkos/aflowey"
-repository = "https://github.com/jerkos/aflowey"
+homepage = "https://github.com/mamori-tai/aflowey"
+repository = "https://github.com/mamori-tai/aflowey"
 documentation = "https://aflowey.readthedocs.io"
 classifiers = [
     "Development Status :: 4 - Beta",
