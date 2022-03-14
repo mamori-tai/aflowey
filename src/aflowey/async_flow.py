@@ -10,7 +10,6 @@ from aflowey.f import F
 from aflowey.functions import ensure_f
 from aflowey.functions import named
 from aflowey.functions import side_effect
-from aflowey.types import Executor
 from aflowey.types import Function
 
 

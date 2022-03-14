@@ -19,7 +19,6 @@ from aflowey import async_exec
 from aflowey import CANCEL_FLOW
 from aflowey import flog
 from aflowey.async_flow import step as _
-from aflowey.executor import ExecutorType
 from aflowey.executor import flows_from_arg
 from aflowey.executor import run_flows
 from aflowey.f import F

@@ -21,7 +21,7 @@ async def _exec(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
     current_result = function(*a, **kw)
     while asyncio.iscoroutine(current_result):
         current_result = await current_result
-    if callable(current_result):
+    if isinstance(current_result, F):
         return await _exec(current_result)
     return current_result
 
@@ -29,7 +29,7 @@ async def _exec(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
 def _exec_synchronously(fn: Function, *args: Any) -> Any:
     def _run():
         result = fn(*args)
-        while callable(result):
+        while isinstance(result, F):
             result = result()
         return result
 
