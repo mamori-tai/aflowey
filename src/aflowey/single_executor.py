@@ -1,6 +1,7 @@
 import asyncio
 import functools
 from contextvars import copy_context
+from inspect import isawaitable
 from typing import Any
 from typing import Awaitable
 from typing import Union
@@ -19,7 +20,7 @@ from aflowey.types import Function
 
 async def _exec(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
     current_result = function(*a, **kw)
-    while asyncio.iscoroutine(current_result):
+    while asyncio.iscoroutine(current_result) or isawaitable(current_result):
         current_result = await current_result
     if isinstance(current_result, F):
         return await _exec(current_result)
