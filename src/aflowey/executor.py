@@ -28,7 +28,7 @@ class AsyncFlowExecutor:
         """
         self.flows: List[Union[AsyncFlow, List[AsyncFlow]]] = []
 
-    def __or__(self, flow: List[AsyncFlow]) -> "AsyncFlowExecutor":
+    def __or__(self, flow: Any) -> "AsyncFlowExecutor":
         """add a flow to execute in parallel"""
         return self.from_flows(flow)
 
