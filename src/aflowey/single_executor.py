@@ -30,7 +30,7 @@ async def _exec(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
 def _exec_synchronously(fn: Function, *args: Any) -> Any:
     def _run():
         result = fn(*args)
-        while isinstance(result, F):
+        while isinstance(result, F):  # pragma: no cover
             result = result()
         return result
 
@@ -63,7 +63,7 @@ def check_and_run_step(fn: F, *args: Any, **kwargs: Any) -> Awaitable[Any]:
         return new_fn(*args, **kwargs)  # type: ignore[call-arg]
 
     new_fn = fn.func
-    if kwargs:
+    if kwargs:  # pragma: no cover
         new_fn = functools.partial(new_fn, **kwargs)
     context = copy_context()
 
@@ -87,7 +87,7 @@ class SingleFlowExecutor:
     ) -> Any:
         """check if we have an async flow and execute it"""
         if isinstance(maybe_flow, AsyncFlow):
-            return await SingleFlowExecutor(maybe_flow).execute_flow()
+            return await SingleFlowExecutor(maybe_flow).execute_flow(is_root=False)
         return maybe_flow
 
     @staticmethod
@@ -127,7 +127,7 @@ class SingleFlowExecutor:
         self.save_step(first_aws, 0, current_args)
         return current_args
 
-    async def execute_flow(self) -> Any:
+    async def execute_flow(self, is_root: bool) -> Any:
         """Main function to execute a flow"""
         if not self.flow.aws:
             return None
@@ -135,6 +135,12 @@ class SingleFlowExecutor:
         # get first step
         first_aws = self.flow.aws[0]
         current_args = await self._execute_first_step(first_aws)
+
+        if self.need_to_cancel_flow(current_args):
+            # returning canceling flow
+            if is_root:
+                return self.flow.args[0]
+            return current_args
 
         for index, task in enumerate(self.flow.aws[1:]):
 

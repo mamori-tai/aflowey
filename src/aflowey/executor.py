@@ -35,7 +35,7 @@ class AsyncFlowExecutor:
     @staticmethod
     async def _execute_one_flow(flow: AsyncFlow) -> Any:
         """Run"""
-        return await SingleFlowExecutor(flow).execute_flow()
+        return await SingleFlowExecutor(flow).execute_flow(is_root=True)
 
     def _execute_or_gather(self, flow: FlowOrListFlow) -> Awaitable[Any]:
         if isinstance(flow, list):
@@ -76,9 +76,7 @@ class AsyncFlowExecutor:
     def starmap(*flows: Any) -> AnyCallable:
         async def wrapper(arg: Any) -> Any:
             new_flows = [AsyncFlowExecutor.ensure_flow(fn, arg) for fn in flows]
-            result = (
-                await AsyncFlowExecutor().from_flows(new_flows).run()
-            )
+            result = await AsyncFlowExecutor().from_flows(new_flows).run()
             return result[0]
 
         return wrapper

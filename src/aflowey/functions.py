@@ -203,7 +203,7 @@ def identity(x: Any) -> Any:
 
 
 # helper functions
-def is_f(func: Any) -> bool:
+def is_f(func: Any) -> bool:  # pragma: no cover
     return isinstance(func, F)
 
 
@@ -211,7 +211,7 @@ def is_f0(func: Function) -> bool:
     return hasattr(func, "__F0__")
 
 
-def is_f1(func: Function) -> bool:
+def is_f1(func: Function) -> bool:  # pragma: no cover
     return hasattr(func, "__F1__")
 
 

@@ -70,7 +70,7 @@ class AsyncFlow:
         """
         from aflowey.single_executor import SingleFlowExecutor
 
-        return await SingleFlowExecutor(self).execute_flow()
+        return await SingleFlowExecutor(self).execute_flow(is_root=True)
 
     @staticmethod
     def from_args(*args: Any, **kwargs: Any) -> "AsyncFlow":

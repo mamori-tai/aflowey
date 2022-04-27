@@ -221,6 +221,20 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         result = await flow.run()
         self.assertEqual(result, 1)
 
+    async def test_early_breaker(self):
+        def value(y):
+            if y == 1:
+                return CANCEL_FLOW
+            return y
+
+        def get_flow(z):
+            return aflow.from_args(z) >> value
+
+        flow = aflow.from_args(1) >> breaker(get_flow)
+
+        result = await flow.run()
+        self.assertEqual(result, 1)
+
     async def test_flow_with_impure_bound_method(self):
         class MyClass:
             async def bound_method(self):

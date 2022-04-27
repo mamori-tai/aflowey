@@ -14,12 +14,12 @@ class ExecutorType(Enum):
 def init_executor_if_needed(
     executor: Opt[Union[Executor, ExecutorType]], **kwargs: Any
 ) -> Opt[Executor]:
-    if executor is None:
+    if executor is None:  # pragma: no cover
         return None
     if isinstance(executor, ExecutorType):
         if executor is ExecutorType.THREAD_POOL:
             return ThreadPoolExecutor(**kwargs)
-        elif executor is ExecutorType.PROCESS_POOL:
+        elif executor is ExecutorType.PROCESS_POOL:  # pragma: no cover
             return ProcessPoolExecutor(**kwargs)
         raise ValueError("Wrong provided executor type")
     return executor
@@ -34,10 +34,8 @@ class AsyncRunner:
     >>>     a, b, (c, d) = await runner.run(async_exec)
     """
 
-    def __init__(self,
-                 func,
-                 executor: Union[Executor, Opt[ExecutorType]] = None,
-                 **kwargs
+    def __init__(
+        self, func, executor: Union[Executor, Opt[ExecutorType]] = None, **kwargs
     ):
         self.func = func
         self._executor = init_executor_if_needed(executor, **kwargs)
