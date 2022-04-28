@@ -1,5 +1,6 @@
 import asyncio
 import functools
+from concurrent.futures import ProcessPoolExecutor
 from contextvars import copy_context
 from inspect import isawaitable
 from typing import Any
@@ -65,6 +66,11 @@ def check_and_run_step(fn: F, *args: Any, **kwargs: Any) -> Awaitable[Any]:
     new_fn = fn.func
     if kwargs:  # pragma: no cover
         new_fn = functools.partial(new_fn, **kwargs)
+
+    # process executor does not have access to the context data
+    if isinstance(executor, ProcessPoolExecutor):
+        return loop.run_in_executor(executor, new_fn, *args)
+
     context = copy_context()
 
     logger.debug(f'running "{new_fn}" in a thread pool executor')
@@ -110,7 +116,8 @@ class SingleFlowExecutor:
 
     def _check_current_args_if_side_effect(self, first_aws: F, res: Any) -> Any:
         if is_side_effect(first_aws):
-            return self.flow.kwargs if self.flow.kwargs else self.flow.args
+            return self._get_result_from_early_abort()
+            # self.flow.kwargs if self.flow.kwargs else self.flow.args
         return res
 
     async def _execute_first_step(self, first_aws: F) -> Any:
@@ -127,6 +134,15 @@ class SingleFlowExecutor:
         self.save_step(first_aws, 0, current_args)
         return current_args
 
+    def _get_result_from_early_abort(self):
+        if self.flow.kwargs:
+            return self.flow.kwargs
+        if not self.flow.args:
+            return None
+        if self.flow.args and len(self.flow.args) == 1:
+            return self.flow.args[0]
+        return self.flow.args
+
     async def execute_flow(self, is_root: bool) -> Any:
         """Main function to execute a flow"""
         if not self.flow.aws:
@@ -139,7 +155,7 @@ class SingleFlowExecutor:
         if self.need_to_cancel_flow(current_args):
             # returning canceling flow
             if is_root:
-                return self.flow.args[0]
+                return self._get_result_from_early_abort()
             return current_args
 
         for index, task in enumerate(self.flow.aws[1:]):

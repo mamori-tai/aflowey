@@ -1,4 +1,5 @@
 import asyncio
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from typing import Any
 from typing import Awaitable
 from typing import List
@@ -54,6 +55,12 @@ class AsyncFlowExecutor:
 
     def process_runner(self, **kwargs):
         return AsyncRunner(self.run, ExecutorType.PROCESS_POOL, **kwargs)
+
+    def with_thread_runner(self, thread_pool: ThreadPoolExecutor, **kwargs):
+        return AsyncRunner(self.run, thread_pool, **kwargs)
+
+    def with_process_runner(self, process_pool: ProcessPoolExecutor, **kwargs):
+        return AsyncRunner(self.run, process_pool, **kwargs)
 
     @staticmethod
     def ensure_flow(fn: Any, arg: Any = None) -> AsyncFlow:

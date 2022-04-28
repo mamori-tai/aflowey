@@ -1,4 +1,5 @@
 import asyncio
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 from aflowey.context import ctx_var, Context
 
@@ -42,6 +43,10 @@ def x():
 
 def print_some_stuff():
     print("Hello from an async flow")
+
+
+def print_x():
+    logger.debug("Hello")
 
 
 class Toto:
@@ -243,11 +248,11 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         a = MyClass()
         f = aflow.from_args(1) >> impure(F0(a.bound_method))
         r = await f.run()
-        self.assertEqual(r, (1,))
+        self.assertEqual(r, 1)
 
         f = aflow.empty() >> impure(F0(a.bound_method))
         r = await f.run()
-        self.assertEqual(r, (None,))
+        self.assertEqual(r, None)
 
         f = aflow.empty() >> a.bound_method
         r = await f.run()
@@ -382,7 +387,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         flow = aflow.empty() >> z >> (FF >> zz >> F0)
         logger.debug(await flow.run())
 
-    async def test_context(self):
+    async def test_context_2(self):
         async def a():
             await asyncio.sleep(0.1)
             logger.debug(Context.get_and_set("toto", lambda z: z.upper()))
@@ -413,3 +418,29 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         with test.thread_runner() as runner:
             self.assertEqual(await runner.run(), [1, 1])
         self.assertEqual(ctx_var.get(), None)
+
+    async def test_test_process_pool(self):
+
+        test = aexec() | self.simple_flow | impure(print_x)
+        with test.process_runner() as runner:
+            self.assertEqual(await runner.run(), [1, None])
+        self.assertEqual(ctx_var.get(), None)
+
+    async def test_test_process_pool_2(self):
+
+        test = aexec() | self.simple_flow | impure(print_x)
+        with test.with_process_runner(ProcessPoolExecutor()) as runner:
+            self.assertEqual(await runner.run(), [1, None])
+        self.assertEqual(ctx_var.get(), None)
+
+        test = aexec() | self.simple_flow | impure(print_x)
+        with test.with_thread_runner(ThreadPoolExecutor()) as runner:
+            self.assertEqual(await runner.run(), [1, None])
+        self.assertEqual(ctx_var.get(), None)
+
+    async def test_multiple_early_return(self):
+        def print_all(x, y, z):
+            logger.debug("{}, {}, {}", x, y, z)
+
+        result = await (aflow.from_args(1, 2, 3) >> impure(print_all)).run()
+        self.assertEqual(result, (1, 2, 3))

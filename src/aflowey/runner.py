@@ -19,9 +19,9 @@ def init_executor_if_needed(
     if isinstance(executor, ExecutorType):
         if executor is ExecutorType.THREAD_POOL:
             return ThreadPoolExecutor(**kwargs)
-        elif executor is ExecutorType.PROCESS_POOL:  # pragma: no cover
+        elif executor is ExecutorType.PROCESS_POOL:
             return ProcessPoolExecutor(**kwargs)
-        raise ValueError("Wrong provided executor type")
+        raise ValueError("Wrong provided executor type")  # pragma: no cover
     return executor
 
 
