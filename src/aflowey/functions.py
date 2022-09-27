@@ -19,7 +19,7 @@ from aflowey.types import Function
 major, minor, *_ = sys.version_info
 if minor < 9:
 
-    async def to_thread(func, /, *args, **kwargs):
+    async def to_thread(func, *args, **kwargs):
         loop = asyncio.get_running_loop()
         ctx = contextvars.copy_context()
         func_call = functools.partial(ctx.run, func, *args, **kwargs)
