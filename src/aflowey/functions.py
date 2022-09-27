@@ -25,7 +25,8 @@ def async_wrap(func: Function) -> F:
 
     @functools.wraps(func)
     async def wrapper(*a: Any, **kw: Any) -> Any:
-        return func(*a, **kw)
+        return await asyncio.to_thread(func, *a, **kw)
+        # return func(*a, **kw)
 
     return F(wrapper)
 
@@ -84,6 +85,7 @@ def f0(func: Function) -> F:
     """
     is_coroutine = asyncio.iscoroutinefunction(func)
 
+    # noinspection PyUnusedLocal
     @functools.wraps(func)
     def wrapped(arg1: Any) -> Any:
         return func()
@@ -113,7 +115,7 @@ def spread_args(func: Function) -> F:
 
     @functools.wraps(func)
     def wrapped(args: Iterable[Any]) -> Any:
-        # if to much args, slice the args to given length
+        # if too much args, slice the args to given length
         return func(*args)
 
     wrapped_fn = async_wrap(wrapped) if is_coroutine else F(wrapped)
@@ -132,7 +134,7 @@ def spread_kwargs(func: Function) -> F:
     @functools.wraps(func)
     def wrapped(**kwargs: Any) -> Any:
         arg_spec = inspect.getfullargspec(func)
-        args = set(arg_spec.args + arg_spec.kwonlyargs) - set(["self"])
+        args = set(arg_spec.args + arg_spec.kwonlyargs) - {"self"}
         new_kwargs = {key: kwargs[key] for key in args}
         return func(**new_kwargs)
 
@@ -182,6 +184,7 @@ def ensure_callable(x: Union[Any, Function]) -> Function:
     """ensure a given args is a callable by returning a new callable if not"""
     if not callable(x):
 
+        # noinspection PyUnusedLocal
         def wrapped(*args: Any, **kwargs: Any) -> Any:
             return x
 
