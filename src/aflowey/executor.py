@@ -34,32 +34,36 @@ class AsyncFlowExecutor:
         return self.from_flows(flow)
 
     @staticmethod
-    async def _execute_one_flow(flow: AsyncFlow) -> Any:
+    async def _execute_one_flow(flow: AsyncFlow, **kwargs: Any) -> Any:
         """Run"""
-        return await SingleFlowExecutor(flow).execute_flow(is_root=True)
+        return await SingleFlowExecutor(flow).execute_flow(is_root=True, **kwargs)
 
-    def _execute_or_gather(self, flow: FlowOrListFlow) -> Awaitable[Any]:
+    def _execute_or_gather(self, flow: FlowOrListFlow, **kwargs: Any) -> Awaitable[Any]:
         if isinstance(flow, list):
-            flows_task = [self._execute_one_flow(flow) for flow in flow]
-            return asyncio.gather(*flows_task)
-        return self._execute_one_flow(flow)
+            flows_task = [self._execute_one_flow(flow, **kwargs) for flow in flow]
+            return asyncio.gather(*flows_task, **kwargs)
+        return self._execute_one_flow(flow, **kwargs)
 
     def run(self, **kwargs: Any) -> Any:
         """main function to run stuff in parallel"""
         # if other flow run in parallel
-        flows = [self._execute_or_gather(flow) for flow in self.flows]
+        flows = [self._execute_or_gather(flow, **kwargs) for flow in self.flows]
         return asyncio.gather(*flows, **kwargs)
 
-    def thread_runner(self, **kwargs):
+    def thread_runner(self, **kwargs) -> AsyncRunner:
         return AsyncRunner(self.run, ExecutorType.THREAD_POOL, **kwargs)
 
-    def process_runner(self, **kwargs):
+    def process_runner(self, **kwargs) -> AsyncRunner:
         return AsyncRunner(self.run, ExecutorType.PROCESS_POOL, **kwargs)
 
-    def with_thread_runner(self, thread_pool: ThreadPoolExecutor, **kwargs):
+    def with_thread_runner(
+        self, thread_pool: ThreadPoolExecutor, **kwargs
+    ) -> AsyncRunner:
         return AsyncRunner(self.run, thread_pool, **kwargs)
 
-    def with_process_runner(self, process_pool: ProcessPoolExecutor, **kwargs):
+    def with_process_runner(
+        self, process_pool: ProcessPoolExecutor, **kwargs
+    ) -> AsyncRunner:
         return AsyncRunner(self.run, process_pool, **kwargs)
 
     @staticmethod
@@ -78,6 +82,10 @@ class AsyncFlowExecutor:
             new_flows = [AsyncFlowExecutor.ensure_flow(value) for value in flows]
             self.flows.append(new_flows)
         return self
+
+    @staticmethod
+    def empty() -> "AsyncFlowExecutor":
+        return AsyncFlowExecutor()
 
     @staticmethod
     def starmap(*flows: Any) -> AnyCallable:

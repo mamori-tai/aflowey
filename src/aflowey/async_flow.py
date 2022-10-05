@@ -33,13 +33,17 @@ class AsyncFlow:
         # intermediary store results
         self.steps: Dict[str, Any] = {}
 
+        # attribute set by the runner
+        self.executed: bool = False
+        self.is_success: Optional[bool] = None
+
     @staticmethod
     def ensure_f_function(func: Union[Function, F]) -> F:
         new_func: Function = ensure_callable(func)
         return ensure_f(new_func)
 
     def __rshift__(
-        self, aws: Union[List[Union[F, Function]], Union[F, Function]]
+        self, aws: Union[List[Union[F, Function]], Union[F, Function], Any]
     ) -> "AsyncFlow":
         """add a new step to the flow
 
@@ -62,7 +66,7 @@ class AsyncFlow:
         new_flow.aws = aws
         return new_flow
 
-    async def run(self) -> Any:
+    async def run(self, **kwargs) -> Any:
         """run the flow
 
         Returns:
@@ -70,7 +74,7 @@ class AsyncFlow:
         """
         from aflowey.single_executor import SingleFlowExecutor
 
-        return await SingleFlowExecutor(self).execute_flow(is_root=True)
+        return await SingleFlowExecutor(self).execute_flow(is_root=True, **kwargs)
 
     @staticmethod
     def from_args(*args: Any, **kwargs: Any) -> "AsyncFlow":

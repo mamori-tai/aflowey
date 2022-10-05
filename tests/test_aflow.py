@@ -354,7 +354,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
             ((a, b, c),) = await runner.run()
             self.assertEqual((a, b, c), (1, 2, 1))
 
-    async def test_lift(self):
+    async def test_lift_2(self):
         def z(value):
             return value * 2
 
@@ -444,3 +444,35 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
 
         result = await (aflow.from_args(1, 2, 3) >> impure(print_all)).run()
         self.assertEqual(result, (1, 2, 3))
+
+    async def test_check_error(self):
+        def test_error():
+            raise ValueError()
+
+        result = aflow.empty() >> test_error
+
+        with self.assertRaises(ValueError):
+            await result.run(return_exceptions=False)
+
+        self.assertEqual(result.is_success, False)
+        self.assertEqual(result.executed, True)
+
+        #
+        await result.run(return_exceptions=True)
+        self.assertEqual(result.is_success, False)
+        self.assertEqual(result.executed, True)
+
+    async def test_return_exceptions_when_multiple_values(self):
+        def test_error():
+            raise ValueError("Unknown error")
+
+        flow1 = aflow.empty() >> test_error
+        flow2 = aflow.empty() >> 1
+        runner = aexec.empty() | flow1 | flow2
+        r1, r2 = await runner.run(return_exceptions=True)
+        self.assertIsInstance(r1, ValueError)
+        self.assertEqual(r2, 1)
+        self.assertEqual(flow1.is_success, False)
+        self.assertEqual(flow1.executed, True)
+        self.assertEqual(flow2.is_success, True)
+        self.assertEqual(flow2.executed, True)

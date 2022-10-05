@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from enum import Enum, auto
-from typing import Union, Any, Mapping
+from typing import Union, Any, Mapping, Optional
 
 from aflowey.context import Context, ctx_var, executor_var
 from aflowey.types import Opt, Executor
@@ -39,7 +39,7 @@ class AsyncRunner:
     ):
         self.func = func
         self._executor = init_executor_if_needed(executor, **kwargs)
-
+        self._result: Optional[Any] = None
         self._ctx = None
         self._token = None
 
@@ -74,10 +74,9 @@ class AsyncRunner:
 
         self._token = ctx_var.set(_ctx)
         executor_var.set(self._executor)
-        # run the function
-        result = await self.func(**kwargs)
+        # run the function of the executor
+        self._result = await self.func(**kwargs)
 
         # reset to avoid memory leak
         ctx_var.reset(self._token)
-
-        return result
+        return self._result
