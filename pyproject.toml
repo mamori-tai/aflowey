@@ -21,10 +21,11 @@ classifiers = [
 Changelog = "https://github.com/mamori-tai/aflowey/releases"
 
 [tool.poetry.dependencies]
-python = "^3.6.2"
+python = "^3.6.3"
 loguru = "^0.5.3"
 aiounittest = "^1.4.1"
 "fnmamoritai.py" = "^0.5.2"
+rich = "^12.6.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

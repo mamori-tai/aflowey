@@ -161,10 +161,10 @@ def ensure_callable(x: Union[Any, Function]) -> Function:
     if not callable(x):
 
         # noinspection PyUnusedLocal
-        def wrapped(*args: Any, **kwargs: Any) -> Any:
+        def __aflowey_wrapped(*args: Any, **kwargs: Any) -> Any:
             return x
 
-        return cast(Function, wrapped)
+        return cast(Function, __aflowey_wrapped)
     return cast(Function, x)
 
 

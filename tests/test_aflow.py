@@ -476,3 +476,10 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         self.assertEqual(flow1.executed, True)
         self.assertEqual(flow2.is_success, True)
         self.assertEqual(flow2.executed, True)
+
+    async def test_flow_str(self):
+        print(type(self.simple_flow))
+        f = aflow.empty() >> impure(lambda: 1) >> self.simple_flow
+        logger.debug("HELLO {}", type(f.aws[1].func))
+        self.assertEqual(await f.run(), 1)
+        f.display()

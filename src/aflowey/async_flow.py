@@ -5,6 +5,8 @@ from typing import List
 from typing import Optional
 from typing import Union
 
+from rich.tree import Tree
+
 from aflowey.functions import ensure_callable
 from aflowey.f import F
 from aflowey.functions import ensure_f
@@ -36,6 +38,9 @@ class AsyncFlow:
         # attribute set by the runner
         self.executed: bool = False
         self.is_success: Optional[bool] = None
+
+    def __call__(self, *args, **kwargs):
+        return self
 
     @staticmethod
     def ensure_f_function(func: Union[Function, F]) -> F:
@@ -93,6 +98,25 @@ class AsyncFlow:
         """
         assert isinstance(flow, AsyncFlow)
         return copy(flow)
+
+    def _to_rich_tree(self) -> Tree:
+        base_tree = Tree(":open_file_folder: flow", style="bright_blue", highlight=True, guide_style="uu bright_blue")
+        for aws in self.aws:
+            inner_func = aws.func
+            if not isinstance(inner_func, AsyncFlow):
+                f_name = inner_func.__name__
+                if f_name == '__aflowey_wrapped':
+                    base_tree.add(str(inner_func()))
+                else:
+                    base_tree.add(f_name)
+            else:
+                base_tree.add(inner_func._to_rich_tree())
+        return base_tree
+
+    def display(self) -> None:
+        root = self._to_rich_tree()
+        from rich import print
+        print(root)
 
 
 # aliases

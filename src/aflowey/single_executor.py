@@ -30,7 +30,7 @@ async def _exec(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
 def check_and_run_step(fn: F, *args: Any, **kwargs: Any) -> Awaitable[Any]:
     executor = executor_var.get()
 
-    if fn.is_coroutine_function or executor is None:
+    if fn.is_coroutine_function:
         return _exec(fn, *args, **kwargs)
 
     new_fn = functools.partial(fn.func, *args, **kwargs)
@@ -58,11 +58,13 @@ class SingleFlowExecutor:
 
     @staticmethod
     async def check_and_execute_flow_if_needed(
-        maybe_flow: Union[Any, AsyncFlow]
+        maybe_flow: Union[Any, AsyncFlow], **kwargs: Any
     ) -> Any:
         """check if we have an async flow and execute it"""
         if isinstance(maybe_flow, AsyncFlow):
-            return await SingleFlowExecutor(maybe_flow).execute_flow(is_root=False)
+            return await SingleFlowExecutor(maybe_flow).execute_flow(
+                is_root=False, **kwargs
+            )
         return maybe_flow
 
     @staticmethod
@@ -89,7 +91,7 @@ class SingleFlowExecutor:
             # self.flow.kwargs if self.flow.kwargs else self.flow.args
         return res
 
-    async def _execute_first_step(self, first_aws: F) -> Any:
+    async def _execute_first_step(self, first_aws: F, **kwargs: Any) -> Any:
         """executing the first step"""
         if not self.flow.args and not self.flow.kwargs and is_f0(first_aws):
             self.flow.args = (None,)
@@ -97,7 +99,9 @@ class SingleFlowExecutor:
         res = await check_and_run_step(first_aws, *self.flow.args, **self.flow.kwargs)
         current_args = self._check_current_args_if_side_effect(first_aws, res)
         # if flow run it
-        current_args = await self.check_and_execute_flow_if_needed(current_args)
+        current_args = await self.check_and_execute_flow_if_needed(
+            current_args, **kwargs
+        )
 
         # memorize name
         self.save_step(first_aws, 0, current_args)
@@ -120,7 +124,7 @@ class SingleFlowExecutor:
         # get first step
         try:
             first_aws = self.flow.aws[0]
-            current_args = await self._execute_first_step(first_aws)
+            current_args = await self._execute_first_step(first_aws, **kwargs)
 
             if self.need_to_cancel_flow(current_args):
                 # returning canceling flow
@@ -139,7 +143,7 @@ class SingleFlowExecutor:
                         break  # pragma: no cover
                     continue  # pragma: no cover
 
-                result = await self.check_and_execute_flow_if_needed(result)
+                result = await self.check_and_execute_flow_if_needed(result, **kwargs)
                 if self.need_to_cancel_flow(
                     result
                 ):  # check if we need to cancel the flow
@@ -147,8 +151,6 @@ class SingleFlowExecutor:
 
                 current_args = result
                 self.save_step(task, index + 1, current_args)
-            # return current args that are the actual results
-            # return current_args
         except Exception as e:
             logger.error(e)
             return_exceptions: bool = kwargs.pop("return_exceptions", False)
@@ -156,7 +158,6 @@ class SingleFlowExecutor:
             self.flow.is_success = False
             if return_exceptions is False:
                 raise e
-            logger.debug("returning {}", e)
             return e
         else:
             self.flow.is_success = True
