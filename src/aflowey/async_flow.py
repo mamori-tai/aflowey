@@ -100,12 +100,17 @@ class AsyncFlow:
         return copy(flow)
 
     def _to_rich_tree(self) -> Tree:
-        base_tree = Tree(":open_file_folder: flow", style="bright_blue", highlight=True, guide_style="uu bright_blue")
+        base_tree = Tree(
+            ":open_file_folder: flow",
+            style="bright_blue",
+            highlight=True,
+            guide_style="uu bright_blue",
+        )
         for aws in self.aws:
             inner_func = aws.func
             if not isinstance(inner_func, AsyncFlow):
                 f_name = inner_func.__name__
-                if f_name == '__aflowey_wrapped':
+                if f_name == "__aflowey_wrapped":
                     base_tree.add(str(inner_func()))
                 else:
                     base_tree.add(f_name)
@@ -116,6 +121,7 @@ class AsyncFlow:
     def display(self) -> None:
         root = self._to_rich_tree()
         from rich import print
+
         print(root)
 
 

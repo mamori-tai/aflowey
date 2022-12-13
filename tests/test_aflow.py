@@ -411,10 +411,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         )
         pflow = aexec() | flow
         with pflow.thread_runner() as runner:
-            self.assertEqual(
-                await runner.run(context={"toto": "Mathieu"}),
-                [None]
-            )
+            self.assertEqual(await runner.run(context={"toto": "Mathieu"}), [None])
 
     async def test_test_test(self):
         test = aexec() | self.simple_flow | self.impure_flow

@@ -1,3 +1,4 @@
+import asyncio
 import functools
 import inspect
 from typing import Any
@@ -12,6 +13,21 @@ from loguru import logger
 
 from aflowey.f import F
 from aflowey.types import Function
+
+
+def wrapper_async(func: Function) -> F:
+    """wrap a function into a coroutine function
+    Args:
+        func: callable
+    Returns:
+        F instance
+    """
+
+    @functools.wraps(func)
+    async def wrapper(*a: Any, **kw: Any) -> Any:
+        return await func(*a, **kw)
+
+    return F(wrapper)
 
 
 def log(log_str: str = "", print_arg: bool = False) -> Any:
@@ -50,7 +66,9 @@ def f1(func: Function, extractor: Optional[Function] = None) -> F:
         value = arg1 if extractor is None else extractor(arg1)
         return func(value)
 
-    wrapped_fn = F(wrapped)
+    wrapped_fn = (
+        wrapper_async(wrapped) if asyncio.iscoroutinefunction(func) else F(wrapped)
+    )
     wrapped_fn.__F1__ = True  # type: ignore
 
     return wrapped_fn
@@ -70,7 +88,9 @@ def f0(func: Function) -> F:
     def wrapped(arg1: Any) -> Any:
         return func()
 
-    wrapped_fn = F(wrapped)
+    wrapped_fn = (
+        wrapper_async(wrapped) if asyncio.iscoroutinefunction(func) else F(wrapped)
+    )
     wrapped_fn.__F0__ = True  # type: ignore
 
     return wrapped_fn
@@ -96,7 +116,9 @@ def spread_args(func: Function) -> F:
         # if too much args, slice the args to given length
         return func(*args)
 
-    wrapped_fn = F(wrapped)
+    wrapped_fn = (
+        wrapper_async(wrapped) if asyncio.iscoroutinefunction(func) else F(wrapped)
+    )
     return wrapped_fn
 
 
@@ -114,7 +136,9 @@ def spread_kwargs(func: Function) -> F:
         new_kwargs = {key: kwargs[key] for key in args}
         return func(**new_kwargs)
 
-    wrapped_fn = F(wrapped)
+    wrapped_fn = (
+        wrapper_async(wrapped) if asyncio.iscoroutinefunction(func) else F(wrapped)
+    )
     return wrapped_fn
 
 
@@ -126,7 +150,7 @@ def lift(f: Function, lift_op: Function = map) -> F:  # type: ignore[assignment]
 
 
 def ensure_f(func: Function) -> F:
-    """wrap the given function into a F instance"""
+    """wrap the given function into an F instance"""
     if not isinstance(func, F):
         return F(func)
     return func
