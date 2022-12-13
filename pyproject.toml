@@ -54,6 +54,9 @@ Pygments = "^2.9.0"
 nox = "^2022.11.21"
 nox-poetry = "^1.0.2"
 
+[tool.poetry.group.dev.dependencies]
+aiounittest = "^1.4.2"
+
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
 
