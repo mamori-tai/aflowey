@@ -48,7 +48,7 @@ https://aflowey.readthedocs.io
 Requirements
 ------------
 
-* python 3.6 +
+* python 3.7 +
 
 This library is easier to use with third party libraries for manipulating function
 such as fn_ (flip function, function composition...), and tenacity_ (retry library).
