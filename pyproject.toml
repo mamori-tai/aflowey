@@ -21,16 +21,18 @@ classifiers = [
 Changelog = "https://github.com/mamori-tai/aflowey/releases"
 
 [tool.poetry.dependencies]
-python = "^3.6.3"
+python = "^3.7.0"
 loguru = "^0.5.3"
-aiounittest = "^1.4.1"
 "fnmamoritai.py" = "^0.5.2"
 rich = "^12.6.0"
+safety = "2.3.5"
+nox-poetry = "1.0.2"
+wheel = "0.38.4"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.4"
+pytest = "^7.2.0"
 coverage = {extras = ["toml"], version = "^6.2"}
-safety = "^1.10.3"
+safety = "^2.3.5"
 mypy = "^0.920"
 typeguard = "^2.13.3"
 xdoctest = {extras = ["colors"], version = "^0.15.5"}
@@ -49,8 +51,8 @@ reorder-python-imports = "^2.5.0"
 pre-commit-hooks = "^4.0.1"
 sphinx-rtd-theme = "^1.0.0"
 Pygments = "^2.9.0"
-nox = "^2021.10.1"
-nox-poetry = "^0.8.6"
+nox = "^2022.11.21"
+nox-poetry = "^1.0.2"
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
