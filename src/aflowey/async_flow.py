@@ -110,7 +110,7 @@ class AsyncFlow:
             inner_func = aws.func
             if not isinstance(inner_func, AsyncFlow):
                 f_name = inner_func.__name__
-                if f_name == "__aflowey_wrapped":
+                if f_name == "__aflowey_wrapped":  # pragma: no cover
                     base_tree.add(str(inner_func()))
                 else:
                     base_tree.add(f_name)
