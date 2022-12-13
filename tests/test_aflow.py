@@ -385,7 +385,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
             return ctx.get("name") + "_checked"
 
         flow = aflow.empty() >> z >> (FF >> zz >> F0)
-        logger.debug(await flow.run())
+        self.assertEqual(await flow.run(), "MARCO_checked")
 
     async def test_context_2(self):
         async def a():
@@ -409,9 +409,12 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
             >> (FF >> aaa >> F0)
             >> (FF >> aaaa >> F0)
         )
-        async_exec = aexec() | flow
-        with async_exec.thread_runner() as runner:
-            logger.debug(await runner.run(context={"toto": "Mathieu"}))
+        pflow = aexec() | flow
+        with pflow.thread_runner() as runner:
+            self.assertEqual(
+                await runner.run(context={"toto": "Mathieu"}),
+                [None]
+            )
 
     async def test_test_test(self):
         test = aexec() | self.simple_flow | self.impure_flow
