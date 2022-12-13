@@ -131,7 +131,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         result = await flow.run()
         self.assertEqual(result, 1)
 
-    async def test_lift(self):
+    async def test_partial(self):
         test = Toto()
         flow = aflow.from_flow(TestAsyncFlow.simple_flow) >> partial(
             test.return_new_value, x=12
@@ -176,7 +176,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         result = await flow.run()
         self.assertEqual(result, 13)
 
-    async def test_lift_of_lift(self):
+    async def test_partial_of_partial(self):
         async def async_toto(number, number_):
             return number + number_
 
