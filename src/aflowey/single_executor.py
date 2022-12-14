@@ -15,7 +15,6 @@ from aflowey.f import F
 from aflowey.functions import get_name
 from aflowey.functions import is_f0
 from aflowey.functions import is_side_effect
-from aflowey.types import AnyCoroutineFunction
 from aflowey.types import Function
 
 
@@ -28,55 +27,25 @@ async def _exec(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
     return current_result
 
 
-def _exec_synchronously(fn: Function, *args: Any) -> Any:
-    def _run():
-        result = fn(*args)
-        while isinstance(result, F):  # pragma: no cover
-            result = result()
-        return result
-
-    return _run
-
-
-def async_wrap(func: F) -> AnyCoroutineFunction:
-    """wrap the given into a coroutine function and try
-    calling it
-    """
-
-    @functools.wraps(func)
-    async def wrapped(*args: Any, **kwargs: Any) -> Any:
-        return await _exec(func, *args, **kwargs)
-
-    return wrapped
-
-
 def check_and_run_step(fn: F, *args: Any, **kwargs: Any) -> Awaitable[Any]:
-    loop = asyncio.get_event_loop()
-
-    if fn.is_coroutine_function:
-        new_fn = async_wrap(fn)
-        return loop.create_task(new_fn(*args, **kwargs))  # type: ignore[call-arg]
-
     executor = executor_var.get()
 
-    if executor is None:
-        new_fn = async_wrap(fn)
-        return new_fn(*args, **kwargs)  # type: ignore[call-arg]
+    if fn.is_coroutine_function:
+        return _exec(fn, *args, **kwargs)
 
-    new_fn = fn.func
-    if kwargs:  # pragma: no cover
-        new_fn = functools.partial(new_fn, **kwargs)
+    new_fn = functools.partial(fn.func, *args, **kwargs)
+
+    loop = asyncio.get_event_loop()
 
     # process executor does not have access to the context data
     if isinstance(executor, ProcessPoolExecutor):
-        return loop.run_in_executor(executor, new_fn, *args)
+        logger.debug(f'running "{new_fn}" in a process pool executor')
+        return loop.run_in_executor(executor, new_fn)
 
     context = copy_context()
 
     logger.debug(f'running "{new_fn}" in a thread pool executor')
-    return loop.run_in_executor(
-        executor, context.run, _exec_synchronously(new_fn, *args)
-    )
+    return loop.run_in_executor(executor, context.run, new_fn)
 
 
 class SingleFlowExecutor:
@@ -89,11 +58,13 @@ class SingleFlowExecutor:
 
     @staticmethod
     async def check_and_execute_flow_if_needed(
-        maybe_flow: Union[Any, AsyncFlow]
+        maybe_flow: Union[Any, AsyncFlow], **kwargs: Any
     ) -> Any:
         """check if we have an async flow and execute it"""
         if isinstance(maybe_flow, AsyncFlow):
-            return await SingleFlowExecutor(maybe_flow).execute_flow(is_root=False)
+            return await SingleFlowExecutor(maybe_flow).execute_flow(
+                is_root=False, **kwargs
+            )
         return maybe_flow
 
     @staticmethod
@@ -120,7 +91,7 @@ class SingleFlowExecutor:
             # self.flow.kwargs if self.flow.kwargs else self.flow.args
         return res
 
-    async def _execute_first_step(self, first_aws: F) -> Any:
+    async def _execute_first_step(self, first_aws: F, **kwargs: Any) -> Any:
         """executing the first step"""
         if not self.flow.args and not self.flow.kwargs and is_f0(first_aws):
             self.flow.args = (None,)
@@ -128,7 +99,9 @@ class SingleFlowExecutor:
         res = await check_and_run_step(first_aws, *self.flow.args, **self.flow.kwargs)
         current_args = self._check_current_args_if_side_effect(first_aws, res)
         # if flow run it
-        current_args = await self.check_and_execute_flow_if_needed(current_args)
+        current_args = await self.check_and_execute_flow_if_needed(
+            current_args, **kwargs
+        )
 
         # memorize name
         self.save_step(first_aws, 0, current_args)
@@ -143,40 +116,54 @@ class SingleFlowExecutor:
             return self.flow.args[0]
         return self.flow.args
 
-    async def execute_flow(self, is_root: bool) -> Any:
+    async def execute_flow(self, is_root: bool, **kwargs: Any) -> Any:
         """Main function to execute a flow"""
         if not self.flow.aws:
             return None
 
         # get first step
-        first_aws = self.flow.aws[0]
-        current_args = await self._execute_first_step(first_aws)
+        try:
+            first_aws = self.flow.aws[0]
+            current_args = await self._execute_first_step(first_aws, **kwargs)
 
-        if self.need_to_cancel_flow(current_args):
-            # returning canceling flow
-            if is_root:
-                return self._get_result_from_early_abort()
-            return current_args
+            if self.need_to_cancel_flow(current_args):
+                # returning canceling flow
+                if is_root:
+                    return self._get_result_from_early_abort()
+                return current_args
 
-        for index, task in enumerate(self.flow.aws[1:]):
+            for index, task in enumerate(self.flow.aws[1:]):
 
-            result = await check_and_run_step(task, current_args)
+                result = await check_and_run_step(task, current_args)
 
-            if is_side_effect(task):
-                # side effect task, does not return a value
+                if is_side_effect(task):
+                    # side effect task, does not return a value
+                    self.save_step(task, index + 1, current_args)
+                    if self.need_to_cancel_flow(result):
+                        break  # pragma: no cover
+                    continue  # pragma: no cover
+
+                result = await self.check_and_execute_flow_if_needed(result, **kwargs)
+                if self.need_to_cancel_flow(
+                    result
+                ):  # check if we need to cancel the flow
+                    break
+
+                current_args = result
                 self.save_step(task, index + 1, current_args)
-                if self.need_to_cancel_flow(result):
-                    break  # pragma: no cover
-                continue  # pragma: no cover
-
-            result = await self.check_and_execute_flow_if_needed(result)
-            if self.need_to_cancel_flow(result):  # check if we need to cancel the flow
-                break
-
-            current_args = result
-            self.save_step(task, index + 1, current_args)
-        # return current args that are the actual results
-        return current_args
+        except Exception as e:
+            logger.error(e)
+            return_exceptions: bool = kwargs.pop("return_exceptions", False)
+            # setting flow information
+            self.flow.is_success = False
+            if return_exceptions is False:
+                raise e
+            return e
+        else:
+            self.flow.is_success = True
+            return current_args
+        finally:
+            self.flow.executed = True
 
 
 CANCEL_FLOW = SingleFlowExecutor.CANCEL_FLOW

@@ -131,7 +131,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         result = await flow.run()
         self.assertEqual(result, 1)
 
-    async def test_lift(self):
+    async def test_partial(self):
         test = Toto()
         flow = aflow.from_flow(TestAsyncFlow.simple_flow) >> partial(
             test.return_new_value, x=12
@@ -176,7 +176,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         result = await flow.run()
         self.assertEqual(result, 13)
 
-    async def test_lift_of_lift(self):
+    async def test_partial_of_partial(self):
         async def async_toto(number, number_):
             return number + number_
 
@@ -313,7 +313,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
             >> _(identity, name="second step")
             >> _(print_stuff, name="impure", impure=True)
             >> _(lambda v: (v + 1, v + 2), name="add_one")
-            >> _(spread(lambda v, z: (z ** 2, v ** 2)), name="pow2")
+            >> _(spread(lambda v, z: (z**2, v**2)), name="pow2")
         )
 
         result = await flow.run()
@@ -323,7 +323,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
 
     async def test_multiple_flows(self):
         def pow_(z, y):
-            return z ** y
+            return z**y
 
         def get_flow(x):
             return aflow.from_args(x) >> identity
@@ -338,7 +338,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
 
     async def test_with_statement(self):
         def pow_(z, y):
-            return z ** y
+            return z**y
 
         def get_flow(y):
             return aflow.from_args(y) >> identity
@@ -354,7 +354,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
             ((a, b, c),) = await runner.run()
             self.assertEqual((a, b, c), (1, 2, 1))
 
-    async def test_lift(self):
+    async def test_lift_2(self):
         def z(value):
             return value * 2
 
@@ -411,10 +411,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
         )
         pflow = aexec() | flow
         with pflow.thread_runner() as runner:
-            self.assertEqual(
-                await runner.run(context={"toto": "Mathieu"}),
-                [None]
-            )
+            self.assertEqual(await runner.run(context={"toto": "Mathieu"}), [None])
 
     async def test_test_test(self):
         test = aexec() | self.simple_flow | self.impure_flow
@@ -447,3 +444,42 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
 
         result = await (aflow.from_args(1, 2, 3) >> impure(print_all)).run()
         self.assertEqual(result, (1, 2, 3))
+
+    async def test_check_error(self):
+        def test_error():
+            raise ValueError()
+
+        result = aflow.empty() >> test_error
+
+        with self.assertRaises(ValueError):
+            await result.run(return_exceptions=False)
+
+        self.assertEqual(result.is_success, False)
+        self.assertEqual(result.executed, True)
+
+        #
+        await result.run(return_exceptions=True)
+        self.assertEqual(result.is_success, False)
+        self.assertEqual(result.executed, True)
+
+    async def test_return_exceptions_when_multiple_values(self):
+        def test_error():
+            raise ValueError("Unknown error")
+
+        flow1 = aflow.empty() >> test_error
+        flow2 = aflow.empty() >> 1
+        runner = aexec.empty() | flow1 | flow2
+        r1, r2 = await runner.run(return_exceptions=True)
+        self.assertIsInstance(r1, ValueError)
+        self.assertEqual(r2, 1)
+        self.assertEqual(flow1.is_success, False)
+        self.assertEqual(flow1.executed, True)
+        self.assertEqual(flow2.is_success, True)
+        self.assertEqual(flow2.executed, True)
+
+    async def test_flow_str(self):
+        print(type(self.simple_flow))
+        f = aflow.empty() >> impure(lambda: 1) >> self.simple_flow
+        logger.debug("HELLO {}", type(f.aws[1].func))
+        self.assertEqual(await f.run(), 1)
+        f.display()

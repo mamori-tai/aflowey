@@ -5,6 +5,8 @@ from typing import List
 from typing import Optional
 from typing import Union
 
+from rich.tree import Tree
+
 from aflowey.functions import ensure_callable
 from aflowey.f import F
 from aflowey.functions import ensure_f
@@ -33,13 +35,20 @@ class AsyncFlow:
         # intermediary store results
         self.steps: Dict[str, Any] = {}
 
+        # attribute set by the runner
+        self.executed: bool = False
+        self.is_success: Optional[bool] = None
+
+    def __call__(self, *args, **kwargs):
+        return self
+
     @staticmethod
     def ensure_f_function(func: Union[Function, F]) -> F:
         new_func: Function = ensure_callable(func)
         return ensure_f(new_func)
 
     def __rshift__(
-        self, aws: Union[List[Union[F, Function]], Union[F, Function]]
+        self, aws: Union[List[Union[F, Function]], Union[F, Function], Any]
     ) -> "AsyncFlow":
         """add a new step to the flow
 
@@ -62,7 +71,7 @@ class AsyncFlow:
         new_flow.aws = aws
         return new_flow
 
-    async def run(self) -> Any:
+    async def run(self, **kwargs) -> Any:
         """run the flow
 
         Returns:
@@ -70,7 +79,7 @@ class AsyncFlow:
         """
         from aflowey.single_executor import SingleFlowExecutor
 
-        return await SingleFlowExecutor(self).execute_flow(is_root=True)
+        return await SingleFlowExecutor(self).execute_flow(is_root=True, **kwargs)
 
     @staticmethod
     def from_args(*args: Any, **kwargs: Any) -> "AsyncFlow":
@@ -89,6 +98,31 @@ class AsyncFlow:
         """
         assert isinstance(flow, AsyncFlow)
         return copy(flow)
+
+    def _to_rich_tree(self) -> Tree:
+        base_tree = Tree(
+            ":open_file_folder: flow",
+            style="bright_blue",
+            highlight=True,
+            guide_style="uu bright_blue",
+        )
+        for aws in self.aws:
+            inner_func = aws.func
+            if not isinstance(inner_func, AsyncFlow):
+                f_name = inner_func.__name__
+                if f_name == "__aflowey_wrapped":  # pragma: no cover
+                    base_tree.add(str(inner_func()))
+                else:
+                    base_tree.add(f_name)
+            else:
+                base_tree.add(inner_func._to_rich_tree())
+        return base_tree
+
+    def display(self) -> None:
+        root = self._to_rich_tree()
+        from rich import print
+
+        print(root)
 
 
 # aliases

@@ -1,8 +1,6 @@
 import asyncio
-import contextvars
 import functools
 import inspect
-import sys
 from typing import Any
 from typing import Callable
 from typing import cast
@@ -16,19 +14,8 @@ from loguru import logger
 from aflowey.f import F
 from aflowey.types import Function
 
-major, minor, *_ = sys.version_info
-if minor < 9:
 
-    async def to_thread(func, *args, **kwargs):
-        loop = asyncio.get_running_loop()
-        ctx = contextvars.copy_context()
-        func_call = functools.partial(ctx.run, func, *args, **kwargs)
-        return await loop.run_in_executor(None, func_call)
-
-    asyncio.to_thread = to_thread
-
-
-def async_wrap(func: Function) -> F:
+def wrapper_async(func: Function) -> F:
     """wrap a function into a coroutine function
     Args:
         func: callable
@@ -38,8 +25,7 @@ def async_wrap(func: Function) -> F:
 
     @functools.wraps(func)
     async def wrapper(*a: Any, **kw: Any) -> Any:
-        return await asyncio.to_thread(func, *a, **kw)
-        # return func(*a, **kw)
+        return await func(*a, **kw)
 
     return F(wrapper)
 
@@ -75,14 +61,14 @@ def f1(func: Function, extractor: Optional[Function] = None) -> F:
     to add an extractor to work on the input argument.
     """
 
-    is_coroutine = asyncio.iscoroutinefunction(func)
-
     @functools.wraps(func)
     def wrapped(arg1: Any) -> Any:
         value = arg1 if extractor is None else extractor(arg1)
         return func(value)
 
-    wrapped_fn = async_wrap(wrapped) if is_coroutine else F(wrapped)
+    wrapped_fn = (
+        wrapper_async(wrapped) if asyncio.iscoroutinefunction(func) else F(wrapped)
+    )
     wrapped_fn.__F1__ = True  # type: ignore
 
     return wrapped_fn
@@ -96,14 +82,15 @@ def f0(func: Function) -> F:
     function takes exactly one argument and does not pass it to the wrapped
     function. It allows using a 0 arity function in a flow relatively easily.
     """
-    is_coroutine = asyncio.iscoroutinefunction(func)
 
     # noinspection PyUnusedLocal
     @functools.wraps(func)
     def wrapped(arg1: Any) -> Any:
         return func()
 
-    wrapped_fn = async_wrap(wrapped) if is_coroutine else F(wrapped)
+    wrapped_fn = (
+        wrapper_async(wrapped) if asyncio.iscoroutinefunction(func) else F(wrapped)
+    )
     wrapped_fn.__F0__ = True  # type: ignore
 
     return wrapped_fn
@@ -124,14 +111,14 @@ def spread_args(func: Function) -> F:
     """create a function which takes an iterable of args
     and spread it into the given function"""
 
-    is_coroutine = asyncio.iscoroutinefunction(func)
-
     @functools.wraps(func)
     def wrapped(args: Iterable[Any]) -> Any:
         # if too much args, slice the args to given length
         return func(*args)
 
-    wrapped_fn = async_wrap(wrapped) if is_coroutine else F(wrapped)
+    wrapped_fn = (
+        wrapper_async(wrapped) if asyncio.iscoroutinefunction(func) else F(wrapped)
+    )
     return wrapped_fn
 
 
@@ -142,8 +129,6 @@ def spread_kwargs(func: Function) -> F:
     """create a function which takes a mapping of kwargs
     and spread it into the given function"""
 
-    is_coroutine = asyncio.iscoroutinefunction(func)
-
     @functools.wraps(func)
     def wrapped(**kwargs: Any) -> Any:
         arg_spec = inspect.getfullargspec(func)
@@ -151,7 +136,9 @@ def spread_kwargs(func: Function) -> F:
         new_kwargs = {key: kwargs[key] for key in args}
         return func(**new_kwargs)
 
-    wrapped_fn = async_wrap(wrapped) if is_coroutine else F(wrapped)
+    wrapped_fn = (
+        wrapper_async(wrapped) if asyncio.iscoroutinefunction(func) else F(wrapped)
+    )
     return wrapped_fn
 
 
@@ -163,7 +150,7 @@ def lift(f: Function, lift_op: Function = map) -> F:  # type: ignore[assignment]
 
 
 def ensure_f(func: Function) -> F:
-    """wrap the given function into a F instance"""
+    """wrap the given function into an F instance"""
     if not isinstance(func, F):
         return F(func)
     return func
@@ -198,14 +185,14 @@ def ensure_callable(x: Union[Any, Function]) -> Function:
     if not callable(x):
 
         # noinspection PyUnusedLocal
-        def wrapped(*args: Any, **kwargs: Any) -> Any:
+        def __aflowey_wrapped(*args: Any, **kwargs: Any) -> Any:
             return x
 
-        return cast(Function, wrapped)
+        return cast(Function, __aflowey_wrapped)
     return cast(Function, x)
 
 
-def named(func: Union[Function, F], name: str) -> F:
+def named(func: Union[Function, F, Any], name: str) -> F:
     """tags a function as a named function"""
     if not callable(func):
         func = ensure_callable(func)

@@ -44,7 +44,7 @@ class F:
     @property
     def is_coroutine_function(self) -> bool:
         func = self.func
-        while isinstance(func, F):  # pragma: no cover
+        while getattr(func, "func", None) is not None:  # pragma: no cover
             func = func.func
         return asyncio.iscoroutinefunction(func)
 
