@@ -313,7 +313,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
             >> _(identity, name="second step")
             >> _(print_stuff, name="impure", impure=True)
             >> _(lambda v: (v + 1, v + 2), name="add_one")
-            >> _(spread(lambda v, z: (z ** 2, v ** 2)), name="pow2")
+            >> _(spread(lambda v, z: (z**2, v**2)), name="pow2")
         )
 
         result = await flow.run()
@@ -323,7 +323,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
 
     async def test_multiple_flows(self):
         def pow_(z, y):
-            return z ** y
+            return z**y
 
         def get_flow(x):
             return aflow.from_args(x) >> identity
@@ -338,7 +338,7 @@ class TestAsyncFlow(IsolatedAsyncioTestCase):
 
     async def test_with_statement(self):
         def pow_(z, y):
-            return z ** y
+            return z**y
 
         def get_flow(y):
             return aflow.from_args(y) >> identity
