@@ -23,7 +23,7 @@ Changelog = "https://github.com/mamori-tai/aflowey/releases"
 
 [tool.poetry.dependencies]
 python = "^3.7.0"
-loguru = "^0.5.3"
+loguru = ">=0.5.3,<0.7.0"
 "fnmamoritai.py" = "^0.5.2"
 rich = "^12.6.0"
 aiounittest = "^1.4.2"
