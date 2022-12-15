@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import inspect
 from concurrent.futures import ProcessPoolExecutor
 from contextvars import copy_context
 from inspect import isawaitable
@@ -25,6 +26,18 @@ async def _exec(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
     if isinstance(current_result, F):
         return await _exec(current_result)
     return current_result
+
+
+async def await_if_needed(maybe_awaitable: Any):
+    res = maybe_awaitable
+    while inspect.isawaitable(res):
+        logger.warning(
+            "Function ran in a thread pool, and it seems that it should have not."
+            "It may be due to tweaks during generation of this higher order function."
+            "You may want to rewrite this function with simple async def definition."
+        )
+        res = await res
+    return res
 
 
 def check_and_run_step(fn: F, *args: Any, **kwargs: Any) -> Awaitable[Any]:
