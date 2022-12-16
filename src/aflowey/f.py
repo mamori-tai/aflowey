@@ -48,9 +48,6 @@ class F:
         while getattr(func, "func", None) is not None:  # pragma: no cover
             func = func.func
 
-        # handle bound method
-        func = getattr(func, "__func__", func)
-
         # finally returning if coroutine function
         return asyncio.iscoroutinefunction(func)
 

@@ -1,12 +1,12 @@
 import asyncio
 import functools
-import inspect
 from concurrent.futures import ProcessPoolExecutor
 from contextvars import copy_context
 from inspect import isawaitable
 from typing import Any
 from typing import Awaitable
 from typing import Union
+import warnings
 
 from loguru import logger
 
@@ -19,46 +19,44 @@ from aflowey.functions import is_side_effect
 from aflowey.types import Function
 
 
-async def _exec(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
-    current_result = function(*a, **kw)
-    while asyncio.iscoroutine(current_result) or isawaitable(current_result):
+async def exec_(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
+    current_result = function(*a, **kw) if isinstance(function, F) else function
+
+    while isawaitable(current_result):
+        warn = kw.pop("_warn", None)
+        if warn is not None:
+            warnings.warn(
+                "Function ran in a thread pool, and it seems that it should have not. "
+                "It may be due to tweaks during generation of this higher order function. "
+                "You may want to rewrite this function with simple async def definition."
+            )
         current_result = await current_result
     if isinstance(current_result, F):
-        return await _exec(current_result)
+        # we launch a new execution only if we have an F
+        # instance, occurring when function returning partial for example
+        # and not on every callable (not especially wanted)
+        return await exec_(current_result)
     return current_result
 
 
-async def await_if_needed(maybe_awaitable: Any):
-    res = maybe_awaitable
-    while inspect.isawaitable(res):
-        logger.warning(
-            "Function ran in a thread pool, and it seems that it should have not."
-            "It may be due to tweaks during generation of this higher order function."
-            "You may want to rewrite this function with simple async def definition."
-        )
-        res = await res
-    return res
-
-
-def check_and_run_step(fn: F, *args: Any, **kwargs: Any) -> Awaitable[Any]:
+async def check_and_run_step(fn: F, *args: Any, **kwargs: Any) -> Awaitable[Any]:
     executor = executor_var.get()
 
     if fn.is_coroutine_function:
-        return _exec(fn, *args, **kwargs)
+        return await exec_(fn, *args, **kwargs)
 
     new_fn = functools.partial(fn.func, *args, **kwargs)
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     # process executor does not have access to the context data
     if isinstance(executor, ProcessPoolExecutor):
-        logger.debug(f'running "{new_fn}" in a process pool executor')
-        return loop.run_in_executor(executor, new_fn)
+        return await loop.run_in_executor(executor, new_fn)
 
-    context = copy_context()
-
-    logger.debug(f'running "{new_fn}" in a thread pool executor')
-    return loop.run_in_executor(executor, context.run, new_fn)
+    ctx = copy_context()
+    func_call = functools.partial(ctx.run, new_fn)
+    result = await loop.run_in_executor(executor, func_call)
+    return await exec_(result, _warn=True)
 
 
 class SingleFlowExecutor:
@@ -110,6 +108,7 @@ class SingleFlowExecutor:
             self.flow.args = (None,)
 
         res = await check_and_run_step(first_aws, *self.flow.args, **self.flow.kwargs)
+
         current_args = self._check_current_args_if_side_effect(first_aws, res)
         # if flow run it
         current_args = await self.check_and_execute_flow_if_needed(
