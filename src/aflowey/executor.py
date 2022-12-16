@@ -44,11 +44,11 @@ class AsyncFlowExecutor:
             return asyncio.gather(*flows_task, **kwargs)
         return self._execute_one_flow(flow, **kwargs)
 
-    def run(self, **kwargs: Any) -> Any:
+    async def run(self, **kwargs: Any) -> Any:
         """main function to run stuff in parallel"""
         # if other flow run in parallel
         flows = [self._execute_or_gather(flow, **kwargs) for flow in self.flows]
-        return asyncio.gather(*flows, **kwargs)
+        return await asyncio.gather(*flows, **kwargs)
 
     def thread_runner(self, **kwargs) -> AsyncRunner:
         return AsyncRunner(self.run, ExecutorType.THREAD_POOL, **kwargs)
