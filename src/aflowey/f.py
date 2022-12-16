@@ -44,8 +44,11 @@ class F:
     @property
     def is_coroutine_function(self) -> bool:
         func = self.func
+        # handle partial and F function
         while getattr(func, "func", None) is not None:  # pragma: no cover
             func = func.func
+
+        # finally returning if coroutine function
         return asyncio.iscoroutinefunction(func)
 
 
