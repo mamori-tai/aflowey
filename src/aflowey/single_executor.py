@@ -19,7 +19,7 @@ from aflowey.functions import is_side_effect
 from aflowey.types import Function
 
 
-async def exec_(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
+async def _exec(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
     current_result = function(*a, **kw) if isinstance(function, F) else function
 
     while isawaitable(current_result):
@@ -35,7 +35,7 @@ async def exec_(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
         # we launch a new execution only if we have an F
         # instance, occurring when function returning partial for example
         # and not on every callable (not especially wanted)
-        return await exec_(current_result)
+        return await _exec(current_result)
     return current_result
 
 
@@ -43,7 +43,7 @@ async def check_and_run_step(fn: F, *args: Any, **kwargs: Any) -> Awaitable[Any]
     executor = executor_var.get()
 
     if fn.is_coroutine_function:
-        return await exec_(fn, *args, **kwargs)
+        return await _exec(fn, *args, **kwargs)
 
     new_fn = functools.partial(fn.func, *args, **kwargs)
 
@@ -56,7 +56,7 @@ async def check_and_run_step(fn: F, *args: Any, **kwargs: Any) -> Awaitable[Any]
     ctx = copy_context()
     func_call = functools.partial(ctx.run, new_fn)
     result = await loop.run_in_executor(executor, func_call)
-    return await exec_(result, _warn=True)
+    return await _exec(result, _warn=True)
 
 
 class SingleFlowExecutor:
