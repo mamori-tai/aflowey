@@ -27,8 +27,6 @@ loguru = ">=0.5.3,<0.7.0"
 "fnmamoritai.py" = "^0.5.2"
 rich = "^12.6.0"
 aiounittest = "^1.4.2"
-black = "22.12.0"
-
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.2.0"
@@ -56,6 +54,9 @@ sphinx-rtd-theme = "^1.0.0"
 Pygments = "^2.9.0"
 nox = "^2022.11.21"
 aiounittest = "^1.4.2"
+
+[tool.poetry.group.dev.dependencies]
+gitpython = "3.1.30"
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
