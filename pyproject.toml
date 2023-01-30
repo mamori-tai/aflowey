@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aflowey"
-version = "0.1.8"
+version = "0.1.9"
 description = "Async flow made easy and fun"
 authors = ["Marc Dubois <cram@hotmail.fr>"]
 license = "MIT"

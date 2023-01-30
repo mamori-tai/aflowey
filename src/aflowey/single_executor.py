@@ -20,10 +20,12 @@ from aflowey.types import Function
 
 
 async def _exec(function: Union[F, Function], *a: Any, **kw: Any) -> Any:
+    # popping _warn kwarg to prevent unwanted kw argument
+    warn = kw.pop("_warn", None)
+
     current_result = function(*a, **kw) if isinstance(function, F) else function
 
     while isawaitable(current_result):
-        warn = kw.pop("_warn", None)
         if warn is not None:
             warnings.warn(
                 "Function ran in a thread pool, and it seems that it should have not. "
